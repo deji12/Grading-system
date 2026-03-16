@@ -1,0 +1,122 @@
+{
+    "app": {
+        "openai_api_key": ""
+    },
+    "subjects": [
+        {
+            "id": 1,
+            "name": "English",
+            "potential_abbreviation": "Eng"
+        },
+        {
+            "id": 2,
+            "name": "Mathematics",
+            "potential_abbreviation": "Maths"
+        },
+        {
+            "id": 3,
+            "name": "Christian Religious Knowledge",
+            "potential_abbreviation": "CRS"
+        },
+        {
+            "id": 4,
+            "name": "Co-Curricular Activities",
+            "potential_abbreviation": "CCA"
+        },
+        {
+            "id": 5,
+            "name": "Basic Science",
+            "potential_abbreviation": "Basic Sci"
+        },
+        {
+            "id": 6,
+            "name": "Basic Technology",
+            "potential_abbreviation": "Basic Tech"
+        },
+        {
+            "id": 7,
+            "name": "Catering And Craft Practices",
+            "potential_abbreviation": "CCP"
+        },
+        {
+            "id": 8,
+            "name": "Creative Arts",
+            "potential_abbreviation": "CCA"
+        },
+        {
+            "id": 9,
+            "name": "Civic Education",
+            "potential_abbreviation": "Civic Edu"
+        },
+        {
+            "id": 10,
+            "name": "Financial Accounting",
+            "potential_abbreviation": "Fin Acc"
+        },
+        {
+            "id": 11,
+            "name": "Government",
+            "potential_abbreviation": "Govt"
+        },
+        {
+            "id": 12,
+            "name": "Agriculture",
+            "potential_abbreviation": "Agric"
+        },
+        {
+            "id": 13,
+            "name": "Chemistry",
+            "potential_abbreviation": "Chem"
+        },
+        {
+            "id": 14,
+            "name": "Biology",
+            "potential_abbreviation": "Bio"
+        },
+        {
+            "id": 15,
+            "name": "Physics",
+            "potential_abbreviation": "Phy"
+        },
+        {
+            "id": 16,
+            "name": "Geography",
+            "potential_abbreviation": "Geo"
+        },
+        {
+            "id": 17,
+            "name": "Economics",
+            "potential_abbreviation": "Econs"
+        },
+        {
+            "id": 18,
+            "name": "Marketing",
+            "potential_abbreviation": "Mktng"
+        },
+        {
+            "id": 19,
+            "name": "Data Processing",
+            "potential_abbreviation": "Data Proc"
+        },
+        {
+            "id": 20,
+            "name": "Moral Instruction",
+            "potential_abbreviation": "Moral Instruct"
+        },
+        {
+            "id": 21,
+            "name": "Literature In English",
+            "potential_abbreviation": "Lit In Eng"
+        },
+        {
+            "id": 22,
+            "name": "Pre-Vocational Studies",
+            "potential_abbreviation": "Pre-Voc"
+        },
+        {
+            "id": 23,
+            "name": "National Values",
+            "potential_abbreviation": "Nat-Val"
+        }
+    ]
+}
