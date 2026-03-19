@@ -1,0 +1,23 @@
+GRADING APP SOFTWARE LICENSE
+
+Copyright (c) 2026 Ayodeji Adesola
+Built by Ayodeji Adesola
+
+This software is provided "as is", without warranty of any kind, express or implied.
+
+TERMS OF USE:
+- Permission is granted to use this software for personal or educational purposes
+- The software may be installed and used on any number of computers
+- The author reserves the right to modify, update, or discontinue the software at any time
+
+THIRD-PARTY INTEGRATION:
+This software includes OpenAI integration which requires:
+- A valid OpenAI API key (provided by the user)
+- Separate usage charges that may apply
+- Compliance with OpenAI's terms of service (the user's responsibility)
+
+PRIVACY:
+All data entered into this application is stored locally on your computer.
+The developer (Ayodeji Adesola) does not collect or store any user data.
+
+By installing and using this software, you agree to these terms.

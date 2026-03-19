@@ -8,3 +8,6 @@ dist
 build
 GradingApp.exe
 version.txt
+grading app installer setup/config.json
+grading app installer setup/GradingApp.exe
+grading app installer setup/GradingAppSetup.exe
