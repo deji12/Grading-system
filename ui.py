@@ -518,7 +518,7 @@ Please confirm that the information above is correct.
         loading_label.pack()
         
         # Variable to store result
-        result = {"data": None, "error": None}
+        result = {"data": None, "error": None, "error_type": None}
         
         # Flag to track if dialog is still active
         dialog_active = True
@@ -528,10 +528,19 @@ Please confirm that the information above is correct.
             try:
                 # Call your formatting function
                 formatted_data = format_user_input(notes, self.config['app']['openai_api_key'])
-                result["data"] = formatted_data
-                save_formatted_data(formatted_data, execute_calculations)
+                
+                # Check if the returned data contains an error
+                if isinstance(formatted_data, dict) and "error" in formatted_data:
+                    result["error"] = formatted_data["error"]
+                    result["error_type"] = "validation"
+                else:
+                    result["data"] = formatted_data
+                    save_formatted_data(formatted_data, execute_calculations)
+                    
             except Exception as e:
+                # Handle any unexpected exceptions
                 result["error"] = str(e)
+                result["error_type"] = "general"
             finally:
                 # Schedule the UI update on the main thread
                 if dialog_active:
@@ -557,11 +566,14 @@ Please confirm that the information above is correct.
                 self.safe_destroy(dialog_to_destroy)
                 
                 if result["error"]:
-                    # Show error message
-                    self.root.after(10, lambda: messagebox.showerror(
-                        "Error",
-                        f"An error occurred while processing:\n\n{result['error']}"
-                    ))
+                    # Show appropriate error message
+                    if result["error_type"] == "validation":
+                        self.show_validation_error_dialog(result["error"])
+                    else:
+                        self.root.after(10, lambda: messagebox.showerror(
+                            "Error",
+                            f"An error occurred while processing:\n\n{result['error']}"
+                        ))
                 else:
                     # Show success message
                     self.root.after(10, lambda: self.show_success_dialog(result["data"]))
@@ -576,6 +588,115 @@ Please confirm that the information above is correct.
         thread = threading.Thread(target=run_api_call)
         thread.daemon = True
         thread.start()
+    
+    def show_validation_error_dialog(self, error_message):
+        """Show a user-friendly validation error dialog."""
+        error_dialog = ctk.CTkToplevel(self.root)
+        error_dialog.title("Invalid Input Format")
+        error_dialog.geometry("400x250")
+        error_dialog.resizable(False, False)
+        error_dialog.transient(self.root)
+        error_dialog.grab_set()
+        
+        # Center the dialog
+        error_dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (400 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (250 // 2)
+        error_dialog.geometry(f"+{x}+{y}")
+        
+        # Configure dialog
+        error_dialog.attributes('-alpha', 0.99)
+        
+        # Error icon
+        ctk.CTkLabel(
+            error_dialog,
+            text="⚠️",
+            font=ctk.CTkFont(size=48)
+        ).pack(pady=(20, 5))
+        
+        # Error title
+        ctk.CTkLabel(
+            error_dialog,
+            text="Invalid Input Format",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#dc3545"
+        ).pack(pady=(0, 10))
+        
+        # Error message with expected format instructions
+        error_frame = ctk.CTkFrame(error_dialog, fg_color="transparent")
+        error_frame.pack(padx=20, pady=(0, 15), fill="both", expand=True)
+        
+        error_text = ctk.CTkTextbox(
+            error_frame,
+            wrap="word",
+            font=ctk.CTkFont(family="Segoe UI", size=11),
+            height=80,
+            corner_radius=8
+        )
+        error_text.pack(fill="both", expand=True)
+        
+        instructions = """The input must follow this format:
+
+• A class header (e.g., "SS2F Report (Third Term)")
+• Three position lines with names and averages
+• A "BEST IN SUBJECTS" section with numbered entries
+• A "MOST IMPROVED" section with numbered entries
+
+Example Input:
+SS2F Report ( Third Term)
+Ist position - Orjiakor Chisom Perpetual . Ave- 86.7
+2nd position - Nweke Miracle Onyinye. Ave- 82.4
+3rd position- Odinchefu Uchechukwu. Ave- 71.7
+
+BEST IN SUBJECTS
+1. English language - Omaba Favour Iruoma. Score- 78
+2. Mathematics - Ezeh Chioma Mary Cynthia. Score- 72
+3. Igbo- Amaechi Judith - 76
+4. Civic Education - Omaba Favour Iruoma - 84
+5. Commerce - Nweke Miracle Onyinye - 87
+6. Fin. Accounting - Ezeogu Ifeoma Favour - 85
+7. Economics - Unamba Oluebube Maryann - 85
+8. Data processing - Umunna Chioma MaryJane - 91
+9. C.C.P- Okeke Adachukwu Deborah - 82
+10. Marketing - Obasi Chidimma- 90
+11. Moral- Nwakwesili Chinenye Gift- 88
+
+MOST IMPROVED
+1. Ezechukwu Oluebube - 41st to 37th
+2. Ezeogu Ifeoma - 37th to 5th
+3. Ezekwe Chinenye- 38th to 34th
+4. Isong Nkemdilim- 12th to 7th
+5. Martin Chimma- 36th to 23rd
+6. Mbanusi Oluebube- 20th to 8th
+7. Nwakwesili Chinenye- 50th to 16th
+8. Odinchefu Uchechukwu - 23rd to 4th
+9. Okeke Adachukwu- 46th to 24th
+10. Okwesa Kosara- 42nd to 32nd
+11. Okeke Onyinye - 30th to 11th
+12. Nweke Miracle - 31st to 3rd
+13. Uchegbu Chinemerem- 15th to 6th
+14. Ugwuoke Chisom- 32nd to 26th
+15. Umunna Chimma- 40th to 8th
+16. Agu Mmasi- 57th to 50th
+Please check your input and try again."""
+        
+        error_text.insert("1.0", instructions)
+        error_text.configure(state="disabled")
+        
+        # OK button
+        def close_dialog():
+            error_dialog.destroy()
+        
+        ctk.CTkButton(
+            error_dialog,
+            text="OK",
+            width=100,
+            command=close_dialog
+        ).pack(pady=(0, 15))
+        
+        # Bind Enter and Escape keys
+        error_dialog.bind('<Return>', lambda event: close_dialog())
+        error_dialog.bind('<Escape>', lambda event: close_dialog())
 
     def show_success_dialog(self, formatted_data):
         """Show success message."""
