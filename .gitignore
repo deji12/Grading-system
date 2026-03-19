@@ -7,3 +7,4 @@ config.json
 dist
 build
 GradingApp.exe
+version.txt
