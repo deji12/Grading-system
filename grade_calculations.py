@@ -18,7 +18,7 @@ def calculate_students_best_in_n_subjects(data, config, n):
         name = item["name"]
         subject_id = item["subject_id"]
 
-        student_subjects.setdefault(name, []).append(subject_id)
+        student_subjects.setdefault(name, set()).add(subject_id)
 
     result = []
 
@@ -35,6 +35,9 @@ def calculate_students_best_in_n_subjects(data, config, n):
                 "subject_name": ", ".join(subject_names)
             })
 
+    if not result:
+        return
+    
     save_to_csv(
         data=result,
         file_destination=os.path.join(
@@ -58,6 +61,9 @@ def extract_and_save_most_improved_students(data):
             "improvement": student.get("improvement")
         })
 
+    if not result:
+        return
+    
     save_to_csv(
         data=result,
         file_destination=os.path.join(
@@ -117,6 +123,9 @@ def calculate_overall_best_in_n_subjects(class_data_path, config, n):
                 "class": class_label
             })
 
+    if not result:
+        return 
+    
     save_to_csv(
         data=result,
         file_destination=os.path.join(
@@ -126,15 +135,348 @@ def calculate_overall_best_in_n_subjects(class_data_path, config, n):
         field_names=["name", "subject_name", "class"]
     )
 
+# 2ND OR 3RD POSITION BELOW AVERAGE 80 ONLY
+def calculate_2nd_and_3rd_position_below_average_80(data):
+    class_name = data.get("class")["name"]
+    class_group = data.get("class")["group"]
+
+    top_students = data.get("top_students", {})
+
+    result = []
+
+    for position in ["second", "third"]:
+        student = top_students.get(position)
+
+        if not student:
+            continue
+
+        average = student.get("average", 0)
+
+        # Apply condition: 70 < average < 80
+        if 70 <= average < 80:
+            result.append({
+                "name": student.get("name"),
+                "average": average,
+                "position": position,
+                "class": f"{class_name}{class_group}"
+            })
+
+    if not result:
+        return 
+    
+    save_to_csv(
+        data=result,
+        file_destination=os.path.join(
+            CLASSES_ROOT_DIR,
+            f"{class_name}/results/{class_name}_{class_group}/2nd_or_3rd_position_below_average_80.csv"
+        ),
+        field_names=["name", "average", "position", "class"]
+    )
+
+# 2ND OR 3RD POSITION BELOW AVERAGE 80, BEST IN ONE-FOUR SUBJECT
+def calculate_2nd_and_3rd_position_below_average_80_best_in_n_subjects(data, config, n):
+    class_name = data.get("class")["name"]
+    class_group = data.get("class")["group"]
+
+    top_students = data.get("top_students", {})
+    subject_toppers = data.get("top_students_in_subjects", [])
+
+    # subject id -> subject name lookup
+    subject_lookup = {s["id"]: s["name"] for s in config["subjects"]}
+
+    # Step 1: count how many subjects each student is best in
+    student_subjects = {}
+    for item in subject_toppers:
+        name = item["name"]
+        subject_id = item["subject_id"]
+
+        # ✅ Use set to avoid duplicates
+        student_subjects.setdefault(name, set()).add(subject_id)
+
+    result = []
+
+    # Step 2: check only 2nd and 3rd positions
+    for position in ["second", "third"]:
+        student = top_students.get(position)
+
+        if not student:
+            continue
+
+        name = student.get("name")
+        average = student.get("average", 0)
+
+        # Step 3: apply average condition
+        if not (70 <= average < 80):
+            continue
+
+        # Step 4: check if student is best in exactly N subjects
+        subjects = student_subjects.get(name, set())
+
+        if len(subjects) == n:
+            subject_names = [
+                subject_lookup.get(sid, "Unknown")
+                for sid in subjects
+            ]
+
+            result.append({
+                "name": name,
+                "average": average,
+                "position": position,
+                "subject_name": ", ".join(subject_names),
+                "class": f"{class_name}{class_group}"
+            })
+
+    if not result:
+        return
+
+    save_to_csv(
+        data=result,
+        file_destination=os.path.join(
+            CLASSES_ROOT_DIR,
+            f"{class_name}/results/{class_name}_{class_group}/"
+            f"2nd_or_3rd_position_below_average_80_best_in_{n}_subjects.csv"
+        ),
+        field_names=["name", "average", "position", "subject_name", "class"]
+    )
+
+# 2ND OR 3RD POSITION BELOW AVERAGE 80, 1ST AMONG THE BEST, BEST IN ONE - SIX SUBJECTS
+def calculate_2nd_3rd_below_80_and_overall_best_in_n_subjects(class_data_path, config, n):
+    subject_lookup = {s["id"]: s["name"] for s in config["subjects"]}
+
+    # =========================
+    # STEP 1: Get overall best per subject
+    # =========================
+    subject_best = {}
+
+    for file in Path(class_data_path).glob("*.json"):
+        with open(file, "r") as f:
+            data = json.load(f)
+
+        class_name = data["class"]["name"]
+        class_group = data["class"]["group"]
+        class_label = f"{class_name}{class_group}"
+
+        for item in data.get("top_students_in_subjects", []):
+            subject_id = item["subject_id"]
+            name = item["name"].strip()
+            score = item["score"]
+
+            if subject_id not in subject_best or score > subject_best[subject_id]["score"]:
+                subject_best[subject_id] = {
+                    "name": name,
+                    "score": score,
+                    "class": class_label
+                }
+
+    # =========================
+    # STEP 2: Group subjects per student (overall winners)
+    # =========================
+    student_subjects = {}
+
+    for subject_id, info in subject_best.items():
+        name = info["name"]
+        class_label = info["class"]
+        subject_name = subject_lookup.get(subject_id, "Unknown")
+
+        key = (name, class_label)
+        student_subjects.setdefault(key, []).append(subject_name)
+
+    # =========================
+    # STEP 3: Filter students with exactly N subjects
+    # =========================
+    qualified_overall = {
+        (name, class_label): subjects
+        for (name, class_label), subjects in student_subjects.items()
+        if len(subjects) == n
+    }
+
+    # =========================
+    # STEP 4: Now filter per class for 2nd/3rd + avg condition
+    # =========================
+    results_by_class = {}
+
+    for file in Path(class_data_path).glob("*.json"):
+        with open(file, "r") as f:
+            data = json.load(f)
+
+        class_name = data["class"]["name"]
+        class_group = data["class"]["group"]
+        class_label = f"{class_name}{class_group}"
+
+        top_students = data.get("top_students", {})
+
+        result = []
+
+        for position in ["second", "third"]:
+            student = top_students.get(position)
+
+            if not student:
+                continue
+
+            name = student.get("name")
+            average = student.get("average", 0)
+
+            # condition: 70 ≤ avg < 80
+            if not (70 <= average < 80):
+                continue
+
+            key = (name, class_label)
+
+            # check if this student is among overall best in N subjects
+            if key in qualified_overall:
+                subjects = qualified_overall[key]
+
+                result.append({
+                    "name": name,
+                    "average": average,
+                    "position": position,
+                    "subject_name": ", ".join(subjects),
+                    "class": class_label
+                })
+
+        if result:
+            results_by_class[class_label] = result
+
+            # save per class
+            save_to_csv(
+                data=result,
+                file_destination=os.path.join(
+                    CLASSES_ROOT_DIR,
+                    f"{class_name}/results/{class_name}_{class_group}/"
+                    f"2nd_or_3rd_position_below_average_80_overall_best_in_{n}_subjects.csv"
+                ),
+                field_names=["name", "average", "position", "subject_name", "class"]
+            )
+
+# 2ND OR 3RD POSITION ABOVE AVERAGE 80 ONLY
+def calculate_2nd_and_3rd_position_above_average_80(data):
+    class_name = data.get("class")["name"]
+    class_group = data.get("class")["group"]
+
+    top_students = data.get("top_students", {})
+
+    result = []
+
+    for position in ["second", "third"]:
+        student = top_students.get(position)
+
+        if not student:
+            continue
+
+        name = student.get("name")
+        average = student.get("average", 0)
+
+        # ✅ Apply condition: average >= 80
+        if average >= 80:
+            result.append({
+                "name": name,
+                "average": average,
+                "position": position,
+                "class": f"{class_name}{class_group}"
+            })
+
+    if not result:
+        return 
+    
+    save_to_csv(
+        data=result,
+        file_destination=os.path.join(
+            CLASSES_ROOT_DIR,
+            f"{class_name}/results/{class_name}_{class_group}/2nd_or_3rd_position_above_average_80.csv"
+        ),
+        field_names=["name", "average", "position", "class"]
+    )
+
+# 2ND OR 3RD POSITION ABOVE AVERAGE 80, BEST IN ONE-SIX SUBJECT
+def calculate_2nd_and_3rd_position_above_average_80_best_in_n_subjects(data, config, n):
+    class_name = data.get("class")["name"].strip()
+    class_group = data.get("class")["group"].strip()
+
+    top_students = data.get("top_students", {})
+    subject_toppers = data.get("top_students_in_subjects", [])
+
+    # subject id -> subject name lookup
+    subject_lookup = {s["id"]: s["name"] for s in config["subjects"]}
+
+    # Step 1: count how many subjects each student is best in
+    student_subjects = {}
+    for item in subject_toppers:
+        name = item["name"]
+        subject_id = item["subject_id"]
+
+        # ✅ Use set to avoid duplicates
+        student_subjects.setdefault(name, set()).add(subject_id)
+
+    result = []
+
+    # Step 2: check only 2nd and 3rd positions
+    for position in ["second", "third"]:
+        student = top_students.get(position)
+
+        if not student:
+            continue
+
+        name = student.get("name")
+        average = student.get("average", 0)
+
+        # ✅ Step 3: apply NEW condition (above 80)
+        if average < 80:
+            continue
+
+        # Step 4: check if student is best in exactly N subjects
+        subjects = student_subjects.get(name, set())
+
+        if len(subjects) == n:
+            subject_names = [
+                subject_lookup.get(sid, "Unknown")
+                for sid in subjects
+            ]
+
+            result.append({
+                "name": name,
+                "average": average,
+                "position": position,
+                "subject_name": ", ".join(subject_names),
+                "class": f"{class_name}{class_group}"
+            })
+
+    if not result:
+        return
+
+    save_to_csv(
+        data=result,
+        file_destination=os.path.join(
+            CLASSES_ROOT_DIR,
+            f"{class_name}/results/{class_name}_{class_group}/"
+            f"2nd_or_3rd_position_above_average_80_best_in_{n}_subjects.csv"
+        ),
+        field_names=["name", "average", "position", "subject_name", "class"]
+    )
+
+
 def execute_calculations(class_data_path):
     config = load_config()
     for class_group in Path(class_data_path).iterdir():
+        
         with open(class_group, 'r') as file:
             data = json.load(file)
+
             for n in range(1, 5):
                 calculate_students_best_in_n_subjects(data, config, n)
 
             extract_and_save_most_improved_students(data)
+            calculate_2nd_and_3rd_position_below_average_80(data)
+
+            for n in range(1, 5):
+                calculate_2nd_and_3rd_position_below_average_80_best_in_n_subjects(data, config, n)
+
+            for n in range(1, 7):
+                calculate_2nd_and_3rd_position_above_average_80_best_in_n_subjects(data, config, n)
+
+            calculate_2nd_and_3rd_position_above_average_80(data)
+
+    for n in range(1, 7):
+        calculate_2nd_3rd_below_80_and_overall_best_in_n_subjects(class_data_path, config, n)
 
     for n in range(1, 7):
         calculate_overall_best_in_n_subjects(
