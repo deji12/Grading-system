@@ -1,5 +1,6 @@
 from openai import OpenAI
 import json
+import openai
 
 def validate_extracted_data(data):
     # If the model returned an "error", raise immediately
@@ -53,17 +54,21 @@ def format_user_input(user_input, api_key):
     print(user_input)
 
     if not is_valid_raw_input(user_input):
-        return {"error": "Invalid input provided"}
+        return {
+            "error": "Invalid input provided",
+            "error_type": "validation"
+        }
     
-    client = OpenAI(api_key=api_key)
-    
-    response = client.responses.create(
-        model="gpt-4.1-mini",
-        temperature=0,
-        input=[
-            {
-                "role": "system",
-                "content": """
+    try:
+        client = OpenAI(api_key=api_key)
+        
+        response = client.responses.create(
+            model="gpt-4.1-mini",
+            temperature=0,
+            input=[
+                {
+                    "role": "system",
+                    "content": """
 You are a strict data extraction engine.
 
 First, validate if the input follows the expected format. If it doesn't, respond with exactly:
@@ -99,106 +104,165 @@ Never copy the numbering from the input.
 
 Return ONLY valid JSON following the schema.
 """
-            },
-            {
-                "role": "user",
-                "content": user_input
-            }
-        ],
-        tools=[
-            {
-                "type": "file_search",
-                "vector_store_ids": ["vs_69b71909d7688191b0b61a7e41035bb9"],
-                "max_num_results": 10
-            }
-        ],
-        text={
-            "format": {
-                "type": "json_schema",
-                "name": "class_report",
-                "schema": {
-                    "type": "object",
-                    "additionalProperties": False,
-                    "properties": {
-                        "class": {
-                            "type": "object",
-                            "additionalProperties": False,
-                            "properties": {
-                                "name": {"type": "string"},
-                                "group": {
-                                    "type": "string",
-                                    "pattern": "^[A-Z]$"
+                },
+                {
+                    "role": "user",
+                    "content": user_input
+                }
+            ],
+            tools=[
+                {
+                    "type": "file_search",
+                    "vector_store_ids": ["vs_69b71909d7688191b0b61a7e41035bb9"],
+                    "max_num_results": 10
+                }
+            ],
+            text={
+                "format": {
+                    "type": "json_schema",
+                    "name": "class_report",
+                    "schema": {
+                        "type": "object",
+                        "additionalProperties": False,
+                        "properties": {
+                            "class": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "group": {
+                                        "type": "string",
+                                        "pattern": "^[A-Z]$"
+                                    },
+                                    "term": {
+                                        "type": "string",
+                                        "enum": ["first", "second", "third"]
+                                    }
                                 },
-                                "term": {
-                                    "type": "string",
-                                    "enum": ["first", "second", "third"]
-                                }
+                                "required": ["name", "group", "term"]
                             },
-                            "required": ["name", "group", "term"]
-                        },
-                        "top_students": {
-                            "type": "object",
-                            "additionalProperties": False,
-                            "properties": {
-                                "first": {"$ref": "#/$defs/student"},
-                                "second": {"$ref": "#/$defs/student"},
-                                "third": {"$ref": "#/$defs/student"}
+                            "top_students": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "first": {"$ref": "#/$defs/student"},
+                                    "second": {"$ref": "#/$defs/student"},
+                                    "third": {"$ref": "#/$defs/student"}
+                                },
+                                "required": ["first", "second", "third"]
                             },
-                            "required": ["first", "second", "third"]
-                        },
-                        "top_students_in_subjects": {
-                            "type": "array",
-                            "items": {"$ref": "#/$defs/subject_student"}
-                        },
-                        "most_improved_students": {
-                            "type": "array",
-                            "items": {"$ref": "#/$defs/improved_student"}
-                        }
-                    },
-                    "required": ["class", "top_students", "top_students_in_subjects", "most_improved_students"],
-                    "$defs": {
-                        "student": {
-                            "type": "object",
-                            "additionalProperties": False,
-                            "properties": {
-                                "name": {"type": "string"},
-                                "average": {"type": "number"}
+                            "top_students_in_subjects": {
+                                "type": "array",
+                                "items": {"$ref": "#/$defs/subject_student"}
                             },
-                            "required": ["name", "average"]
+                            "most_improved_students": {
+                                "type": "array",
+                                "items": {"$ref": "#/$defs/improved_student"}
+                            }
                         },
-                        "subject_student": {
-                            "type": "object",
-                            "additionalProperties": False,
-                            "properties": {
-                                "subject_id": {"type": "integer"},
-                                "name": {"type": "string"},
-                                "score": {"type": "number"}
+                        "required": ["class", "top_students", "top_students_in_subjects", "most_improved_students"],
+                        "$defs": {
+                            "student": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "average": {"type": "number"}
+                                },
+                                "required": ["name", "average"]
                             },
-                            "required": ["subject_id", "name", "score"]
-                        },
-                        "improved_student": {
-                            "type": "object",
-                            "additionalProperties": False,
-                            "properties": {
-                                "name": {"type": "string"},
-                                "improvement": {"type": "string"}
+                            "subject_student": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "subject_id": {"type": "integer"},
+                                    "name": {"type": "string"},
+                                    "score": {"type": "number"}
+                                },
+                                "required": ["subject_id", "name", "score"]
                             },
-                            "required": ["name", "improvement"]
+                            "improved_student": {
+                                "type": "object",
+                                "additionalProperties": False,
+                                "properties": {
+                                    "name": {"type": "string"},
+                                    "improvement": {"type": "string"}
+                                },
+                                "required": ["name", "improvement"]
+                            }
                         }
                     }
                 }
             }
+        )
+
+        data = json.loads(response.output_text)
+
+        try:
+            validate_extracted_data(data)
+        except ValueError:
+            # If validation fails, force the error object
+            return {
+                "error": "Invalid input provided",
+                "error_type": "validation"
+            }
+
+        print(json.dumps(data, indent=4))
+        return {"data": data}
+        
+    except openai.APIConnectionError as e:
+        # Network error - can't connect to OpenAI
+        print(f"Network error: {e}")
+        return {
+            "error": "Network error: Could not connect to OpenAI. Please check your internet connection.",
+            "error_type": "network"
         }
-    )
-
-    data = json.loads(response.output_text)
-
-    try:
-        validate_extracted_data(data)
-    except ValueError:
-        # If validation fails, force the error object
-        data = {"error": "Invalid input provided"}
-
-    print(json.dumps(data, indent=4))
     
-    return data
+    except openai.RateLimitError as e:
+        # Rate limit exceeded
+        print(f"Rate limit error: {e}")
+        return {
+            "error": "Rate limit exceeded. Please wait a moment and try again.",
+            "error_type": "rate_limit"
+        }
+    
+    except openai.APIStatusError as e:
+        # API returned an error status (4xx or 5xx)
+        print(f"API status error: {e}")
+        status_code = e.status_code
+        if status_code == 401:
+            return {
+                "error": "Authentication error: Invalid API key. Please check your OpenAI API key in config.json.",
+                "error_type": "auth"
+            }
+        elif status_code == 429:
+            return {
+                "error": "Quota exceeded: You have exceeded your OpenAI API quota. Please check your billing details.",
+                "error_type": "quota"
+            }
+        elif status_code == 500:
+            return {
+                "error": "OpenAI server error. Please try again later.",
+                "error_type": "server"
+            }
+        else:
+            return {
+                "error": f"OpenAI API error (HTTP {status_code}): {str(e)}",
+                "error_type": "api_error"
+            }
+    
+    except openai.APITimeoutError as e:
+        # Request timed out
+        print(f"Timeout error: {e}")
+        return {
+            "error": "Request timed out. Please try again.",
+            "error_type": "timeout"
+        }
+    
+    except Exception as e:
+        # Any other unexpected error
+        print(f"Unexpected error: {e}")
+        return {
+            "error": f"An unexpected error occurred: {str(e)}",
+            "error_type": "general"
+        }

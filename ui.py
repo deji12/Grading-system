@@ -17,12 +17,20 @@ ctk.set_default_color_theme("blue")
 class BeautifulSchoolSessionForm:
     def __init__(self, root):
         create_required_folders()
-        self.config = load_config()
+
         self.root = root
         self.root.title("School Session Form")
         
-        # Don't set full screen here - do it after UI is built
-        # We'll call it at the end of __init__
+        try:
+            self.config = load_config()
+        except FileNotFoundError as e:
+            # Config file missing - show error and don't create UI
+            self.show_config_error_and_exit(str(e), "config")
+            return
+        except ValueError as e:
+            # Invalid config or missing API key - show error and don't create UI
+            self.show_config_error_and_exit(str(e), "config")
+            return
         
         # Configure main grid (1 column, 1 row, expand)
         self.root.grid_columnconfigure(0, weight=1)
@@ -526,26 +534,34 @@ Please confirm that the information above is correct.
         def run_api_call():
             """Run the API call in a separate thread."""
             try:
-                # Call your formatting function
-                formatted_data = format_user_input(notes, self.config['app']['openai_api_key'])
+                # Check if API key is configured
+                api_key = self.config.get('app', {}).get('openai_api_key')
+                if not api_key or api_key == "YOUR_API_KEY_HERE":
+                    result["error"] = "OpenAI API key is not configured. Please add your API key to config.json"
+                    result["error_type"] = "config"
+                    return
                 
-                # Check if the returned data contains an error
-                if isinstance(formatted_data, dict) and "error" in formatted_data:
-                    result["error"] = formatted_data["error"]
-                    result["error_type"] = "validation"
+                # Call your formatting function
+                response = format_user_input(notes, api_key)
+                
+                # Check if the response contains an error
+                if "error" in response:
+                    result["error"] = response["error"]
+                    result["error_type"] = response["error_type"]
                 else:
-                    result["data"] = formatted_data
-                    save_formatted_data(formatted_data, execute_calculations)
+                    # Success case - response contains "data" key
+                    result["data"] = response["data"]
+                    save_formatted_data(response["data"], execute_calculations)
                     
             except Exception as e:
                 # Handle any unexpected exceptions
-                result["error"] = str(e)
+                result["error"] = f"An unexpected error occurred: {str(e)}"
                 result["error_type"] = "general"
             finally:
                 # Schedule the UI update on the main thread
                 if dialog_active:
                     loading_dialog.after(0, on_api_complete)
-        
+
         def on_api_complete():
             """Called when API call is complete (runs on main thread)."""
             nonlocal dialog_active
@@ -569,11 +585,12 @@ Please confirm that the information above is correct.
                     # Show appropriate error message
                     if result["error_type"] == "validation":
                         self.show_validation_error_dialog(result["error"])
+                    elif result["error_type"] in ["config", "auth", "quota", "model", "library"]:
+                        self.show_config_error_dialog(result["error"], result["error_type"])
+                    elif result["error_type"] in ["network", "timeout"]:
+                        self.show_network_error_dialog(result["error"])
                     else:
-                        self.root.after(10, lambda: messagebox.showerror(
-                            "Error",
-                            f"An error occurred while processing:\n\n{result['error']}"
-                        ))
+                        self.show_general_error_dialog(result["error"])
                 else:
                     # Show success message
                     self.root.after(10, lambda: self.show_success_dialog(result["data"]))
@@ -588,7 +605,278 @@ Please confirm that the information above is correct.
         thread = threading.Thread(target=run_api_call)
         thread.daemon = True
         thread.start()
-    
+
+    def show_config_error_and_exit(self, error_message, error_type):
+        """Show configuration error dialog and exit the application after user clicks OK."""
+        
+        # Create a dialog that will close the app when OK is clicked
+        error_dialog = ctk.CTkToplevel(self.root)
+        error_dialog.title("Configuration Error")
+        error_dialog.geometry("450x250")
+        error_dialog.resizable(False, False)
+        error_dialog.transient(self.root)
+        error_dialog.grab_set()
+        error_dialog.focus_set()
+        
+        # Get screen dimensions for centering
+        screen_width = error_dialog.winfo_screenwidth()
+        screen_height = error_dialog.winfo_screenheight()
+        
+        # Calculate position to center on screen
+        dialog_width = 450
+        dialog_height = 250
+        x = (screen_width // 2) - (dialog_width // 2)
+        y = (screen_height // 2) - (dialog_height // 2)
+        
+        # Set the position
+        error_dialog.geometry(f"{dialog_width}x{dialog_height}+{x}+{y}")
+        
+        error_dialog.attributes('-alpha', 0.99)
+        
+        # Configure grid
+        error_dialog.grid_columnconfigure(0, weight=1)
+        error_dialog.grid_rowconfigure(2, weight=1)
+        
+        # Icon based on error type
+        icon = "🔑" if error_type == "auth" else "⚙️" if error_type == "config" else "💰" if error_type == "quota" else "📚"
+        
+        ctk.CTkLabel(
+            error_dialog,
+            text=icon,
+            font=ctk.CTkFont(size=48)
+        ).grid(row=0, column=0, pady=(20, 5))
+        
+        # Title
+        title = "Configuration Error"
+        
+        ctk.CTkLabel(
+            error_dialog,
+            text=title,
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#dc3545"
+        ).grid(row=1, column=0, pady=(0, 10))
+        
+        # Error message
+        message_frame = ctk.CTkFrame(error_dialog, fg_color="transparent")
+        message_frame.grid(row=2, column=0, padx=20, pady=(0, 15), sticky="nsew")
+        message_frame.grid_columnconfigure(0, weight=1)
+        message_frame.grid_rowconfigure(0, weight=1)
+        
+        message_text = ctk.CTkTextbox(
+            message_frame,
+            wrap="word",
+            font=ctk.CTkFont(size=11),
+            height=80,
+            corner_radius=8
+        )
+        message_text.grid(row=0, column=0, sticky="nsew")
+        message_text.insert("1.0", error_message)
+        message_text.configure(state="disabled")
+        
+        # OK button - this will close the dialog AND the entire app
+        def close_and_exit():
+            error_dialog.destroy()
+            self.root.quit()  # Use quit() instead of destroy() to properly exit the app
+            self.root.destroy()
+        
+        ctk.CTkButton(
+            error_dialog,
+                text="OK",
+            width=100,
+            command=close_and_exit
+        ).grid(row=3, column=0, pady=(0, 15))
+        
+        # Bind Enter and Escape keys to exit
+        error_dialog.bind('<Return>', lambda event: close_and_exit())
+        error_dialog.bind('<Escape>', lambda event: close_and_exit())
+        
+        # Prevent the main window from showing
+        self.root.withdraw()  # Hide the main window
+        
+        # Keep the dialog open until user clicks OK
+        self.root.wait_window(error_dialog)
+
+    def show_config_error_dialog(self, error_message, error_type):
+        """Show configuration error dialog (non-fatal, doesn't close app)."""
+        error_dialog = ctk.CTkToplevel(self.root)
+        error_dialog.title("Configuration Error")
+        error_dialog.geometry("450x250")
+        error_dialog.resizable(False, False)
+        error_dialog.transient(self.root)
+        error_dialog.grab_set()
+        
+        # Center the dialog
+        error_dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (450 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (250 // 2)
+        error_dialog.geometry(f"+{x}+{y}")
+        
+        error_dialog.attributes('-alpha', 0.99)
+        
+        # Configure grid
+        error_dialog.grid_columnconfigure(0, weight=1)
+        error_dialog.grid_rowconfigure(2, weight=1)
+        
+        # Icon based on error type
+        icon = "🔑" if error_type == "auth" else "⚙️" if error_type == "config" else "💰" if error_type == "quota" else "📚"
+        
+        ctk.CTkLabel(
+            error_dialog,
+            text=icon,
+            font=ctk.CTkFont(size=48)
+        ).grid(row=0, column=0, pady=(20, 5))
+        
+        # Title
+        title = "API Key Required" if error_type == "config" else "Invalid API Key" if error_type == "auth" else "API Quota Exceeded" if error_type == "quota" else "Configuration Error"
+        
+        ctk.CTkLabel(
+            error_dialog,
+            text=title,
+            font=ctk.CTkFont(size=18, weight="bold"),
+            text_color="#dc3545"
+        ).grid(row=1, column=0, pady=(0, 10))
+        
+        # Error message
+        message_frame = ctk.CTkFrame(error_dialog, fg_color="transparent")
+        message_frame.grid(row=2, column=0, padx=20, pady=(0, 15), sticky="nsew")
+        message_frame.grid_columnconfigure(0, weight=1)
+        message_frame.grid_rowconfigure(0, weight=1)
+        
+        message_text = ctk.CTkTextbox(
+            message_frame,
+            wrap="word",
+            font=ctk.CTkFont(size=11),
+            height=80,
+            corner_radius=8
+        )
+        message_text.grid(row=0, column=0, sticky="nsew")
+        message_text.insert("1.0", error_message)
+        message_text.configure(state="disabled")
+        
+        # OK button - just close the dialog
+        def close_dialog():
+            error_dialog.destroy()
+        
+        ctk.CTkButton(
+            error_dialog,
+            text="OK",
+            width=100,
+            command=close_dialog
+        ).grid(row=3, column=0, pady=(0, 15))
+        
+        error_dialog.bind('<Return>', lambda event: close_dialog())
+        error_dialog.bind('<Escape>', lambda event: close_dialog())
+
+    def show_network_error_dialog(self, error_message):
+        """Show network error dialog."""
+        error_dialog = ctk.CTkToplevel(self.root)
+        error_dialog.title("Network Error")
+        error_dialog.geometry("400x200")
+        error_dialog.resizable(False, False)
+        error_dialog.transient(self.root)
+        error_dialog.grab_set()
+        
+        # Center the dialog
+        error_dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (400 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (200 // 2)
+        error_dialog.geometry(f"+{x}+{y}")
+        
+        error_dialog.attributes('-alpha', 0.99)
+        
+        # Icon
+        ctk.CTkLabel(
+            error_dialog,
+            text="🌐",
+            font=ctk.CTkFont(size=48)
+        ).pack(pady=(20, 5))
+        
+        # Title
+        ctk.CTkLabel(
+            error_dialog,
+            text="Network Connection Error",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#dc3545"
+        ).pack(pady=(0, 10))
+        
+        # Message
+        message_label = ctk.CTkLabel(
+            error_dialog,
+            text=error_message,
+            font=ctk.CTkFont(size=11),
+            wraplength=350
+        )
+        message_label.pack(padx=20, pady=(0, 15))
+        
+        # OK button
+        def close_dialog():
+            error_dialog.destroy()
+        
+        ctk.CTkButton(
+            error_dialog,
+            text="OK",
+            width=100,
+            command=close_dialog
+        ).pack(pady=(0, 15))
+        
+        error_dialog.bind('<Return>', lambda event: close_dialog())
+        error_dialog.bind('<Escape>', lambda event: close_dialog())
+
+    def show_general_error_dialog(self, error_message):
+        """Show general error dialog."""
+        error_dialog = ctk.CTkToplevel(self.root)
+        error_dialog.title("Error")
+        error_dialog.geometry("400x200")
+        error_dialog.resizable(False, False)
+        error_dialog.transient(self.root)
+        error_dialog.grab_set()
+        
+        # Center the dialog
+        error_dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (400 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (200 // 2)
+        error_dialog.geometry(f"+{x}+{y}")
+        
+        error_dialog.attributes('-alpha', 0.99)
+        
+        # Icon
+        ctk.CTkLabel(
+            error_dialog,
+            text="❌",
+            font=ctk.CTkFont(size=48)
+        ).pack(pady=(20, 5))
+        
+        # Title
+        ctk.CTkLabel(
+            error_dialog,
+            text="An Error Occurred",
+            font=ctk.CTkFont(size=16, weight="bold"),
+            text_color="#dc3545"
+        ).pack(pady=(0, 10))
+        
+        # Message
+        message_label = ctk.CTkLabel(
+            error_dialog,
+            text=error_message,
+            font=ctk.CTkFont(size=11),
+            wraplength=350
+        )
+        message_label.pack(padx=20, pady=(0, 15))
+        
+        # OK button
+        def close_dialog():
+            error_dialog.destroy()
+        
+        ctk.CTkButton(
+            error_dialog,
+            text="OK",
+            width=100,
+            command=close_dialog
+        ).pack(pady=(0, 15))
+        
+        error_dialog.bind('<Return>', lambda event: close_dialog())
+        error_dialog.bind('<Escape>', lambda event: close_dialog())
+
     def show_validation_error_dialog(self, error_message):
         """Show a user-friendly validation error dialog that fits the screen."""
         
@@ -746,6 +1034,10 @@ Scroll for full example. Check your input and try again."""
 
     def show_success_dialog(self, formatted_data):
         """Show success message."""
+
+        # Clear the text area
+        self.text_area.delete("1.0", tk.END)
+
         success_dialog = ctk.CTkToplevel(self.root)
         success_dialog.title("Success")
         success_dialog.geometry("300x150")
