@@ -4,3 +4,6 @@ app/__pycache__
 classes
 classes/
 config.json
+dist
+build
+GradingApp.exe
