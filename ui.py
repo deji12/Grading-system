@@ -590,109 +590,155 @@ Please confirm that the information above is correct.
         thread.start()
     
     def show_validation_error_dialog(self, error_message):
-        """Show a user-friendly validation error dialog."""
+        """Show a user-friendly validation error dialog that fits the screen."""
+        
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        
+        # Calculate dialog size (80% of screen width, 70% of screen height)
+        dialog_width = min(700, int(screen_width * 0.8))
+        dialog_height = min(600, int(screen_height * 0.7))
+        
+        # Ensure minimum size
+        dialog_width = max(500, dialog_width)
+        dialog_height = max(450, dialog_height)
+        
+        # Create dialog with calculated size
         error_dialog = ctk.CTkToplevel(self.root)
         error_dialog.title("Invalid Input Format")
-        error_dialog.geometry("400x250")
-        error_dialog.resizable(False, False)
+        error_dialog.geometry(f"{dialog_width}x{dialog_height}")
+        error_dialog.resizable(True, True)
+        error_dialog.minsize(450, 400)
         error_dialog.transient(self.root)
         error_dialog.grab_set()
         
         # Center the dialog
         error_dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (400 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (250 // 2)
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (dialog_width // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (dialog_height // 2)
         error_dialog.geometry(f"+{x}+{y}")
         
         # Configure dialog
         error_dialog.attributes('-alpha', 0.99)
         
-        # Error icon
-        ctk.CTkLabel(
+        # Configure grid for better expansion
+        error_dialog.grid_columnconfigure(0, weight=1)
+        error_dialog.grid_rowconfigure(3, weight=1)  # The text area row expands
+        
+        # Error icon - make it smaller to save space
+        icon_label = ctk.CTkLabel(
             error_dialog,
             text="⚠️",
-            font=ctk.CTkFont(size=48)
-        ).pack(pady=(20, 5))
+            font=ctk.CTkFont(size=36)  # Reduced from 48
+        )
+        icon_label.grid(row=0, column=0, pady=(10, 2))  # Reduced padding
         
         # Error title
-        ctk.CTkLabel(
+        title_label = ctk.CTkLabel(
             error_dialog,
             text="Invalid Input Format",
-            font=ctk.CTkFont(size=16, weight="bold"),
+            font=ctk.CTkFont(size=18, weight="bold"),  # Slightly smaller
             text_color="#dc3545"
-        ).pack(pady=(0, 10))
+        )
+        title_label.grid(row=1, column=0, pady=(0, 5))  # Reduced padding
+        
+        # Instructions label
+        instructions_label = ctk.CTkLabel(
+            error_dialog,
+            text="Your input doesn't match the expected format. Please follow the example below:",
+            font=ctk.CTkFont(size=11),  # Smaller font
+            wraplength=dialog_width - 60
+        )
+        instructions_label.grid(row=2, column=0, padx=20, pady=(0, 8))
         
         # Error message with expected format instructions
         error_frame = ctk.CTkFrame(error_dialog, fg_color="transparent")
-        error_frame.pack(padx=20, pady=(0, 15), fill="both", expand=True)
+        error_frame.grid(row=3, column=0, padx=15, pady=(0, 10), sticky="nsew")
+        error_frame.grid_columnconfigure(0, weight=1)
+        error_frame.grid_rowconfigure(0, weight=1)
         
         error_text = ctk.CTkTextbox(
             error_frame,
             wrap="word",
-            font=ctk.CTkFont(family="Segoe UI", size=11),
-            height=80,
-            corner_radius=8
+            font=ctk.CTkFont(family="Consolas", size=10),  # Smaller font
+            corner_radius=8,
+            border_width=1,
+            border_color="#a0a0a0"
         )
-        error_text.pack(fill="both", expand=True)
-        
-        instructions = """The input must follow this format:
+        error_text.grid(row=0, column=0, sticky="nsew")
+    
+        # Compact instructions with clear formatting
+        instructions = """📋 REQUIRED FORMAT:
+• Class header (e.g., "SS2F Report (Third Term)")
+• 3 position lines with names & averages
+• "BEST IN SUBJECTS" section with numbered entries
+• "MOST IMPROVED" section with numbered entries
 
-• A class header (e.g., "SS2F Report (Third Term)")
-• Three position lines with names and averages
-• A "BEST IN SUBJECTS" section with numbered entries
-• A "MOST IMPROVED" section with numbered entries
-
-Example Input:
-SS2F Report ( Third Term)
-Ist position - Orjiakor Chisom Perpetual . Ave- 86.7
+✅ EXAMPLE (truncated - scroll for full):
+────────────────────────────────
+SS2F Report (Third Term)
+1st position - Orjiakor Chisom Perpetual . Ave- 86.7
 2nd position - Nweke Miracle Onyinye. Ave- 82.4
-3rd position- Odinchefu Uchechukwu. Ave- 71.7
+3rd position - Odinchefu Uchechukwu. Ave- 71.7
 
 BEST IN SUBJECTS
 1. English language - Omaba Favour Iruoma. Score- 78
 2. Mathematics - Ezeh Chioma Mary Cynthia. Score- 72
-3. Igbo- Amaechi Judith - 76
+3. Igbo - Amaechi Judith - 76
 4. Civic Education - Omaba Favour Iruoma - 84
 5. Commerce - Nweke Miracle Onyinye - 87
 6. Fin. Accounting - Ezeogu Ifeoma Favour - 85
 7. Economics - Unamba Oluebube Maryann - 85
 8. Data processing - Umunna Chioma MaryJane - 91
-9. C.C.P- Okeke Adachukwu Deborah - 82
-10. Marketing - Obasi Chidimma- 90
-11. Moral- Nwakwesili Chinenye Gift- 88
+9. C.C.P - Okeke Adachukwu Deborah - 82
+10. Marketing - Obasi Chidimma - 90
+11. Moral - Nwakwesili Chinenye Gift - 88
 
 MOST IMPROVED
 1. Ezechukwu Oluebube - 41st to 37th
 2. Ezeogu Ifeoma - 37th to 5th
-3. Ezekwe Chinenye- 38th to 34th
-4. Isong Nkemdilim- 12th to 7th
-5. Martin Chimma- 36th to 23rd
-6. Mbanusi Oluebube- 20th to 8th
-7. Nwakwesili Chinenye- 50th to 16th
+3. Ezekwe Chinenye - 38th to 34th
+4. Isong Nkemdilim - 12th to 7th
+5. Martin Chimma - 36th to 23rd
+6. Mbanusi Oluebube - 20th to 8th
+7. Nwakwesili Chinenye - 50th to 16th
 8. Odinchefu Uchechukwu - 23rd to 4th
-9. Okeke Adachukwu- 46th to 24th
-10. Okwesa Kosara- 42nd to 32nd
+9. Okeke Adachukwu - 46th to 24th
+10. Okwesa Kosara - 42nd to 32nd
 11. Okeke Onyinye - 30th to 11th
 12. Nweke Miracle - 31st to 3rd
-13. Uchegbu Chinemerem- 15th to 6th
-14. Ugwuoke Chisom- 32nd to 26th
-15. Umunna Chimma- 40th to 8th
-16. Agu Mmasi- 57th to 50th
-Please check your input and try again."""
-        
+13. Uchegbu Chinemerem - 15th to 6th
+14. Ugwuoke Chisom - 32nd to 26th
+15. Umunna Chimma - 40th to 8th
+16. Agu Mmasi - 57th to 50th
+
+❌ COMMON MISTAKES:
+• Missing header or sections
+• Wrong number formatting
+• Missing numbered lists
+
+Scroll for full example. Check your input and try again."""
+    
         error_text.insert("1.0", instructions)
         error_text.configure(state="disabled")
+        
+        # OK Button frame
+        button_frame = ctk.CTkFrame(error_dialog, fg_color="transparent")
+        button_frame.grid(row=4, column=0, pady=(0, 12))
         
         # OK button
         def close_dialog():
             error_dialog.destroy()
         
         ctk.CTkButton(
-            error_dialog,
+            button_frame,
             text="OK",
             width=100,
+            height=32,
+            font=ctk.CTkFont(size=12, weight="bold"),
             command=close_dialog
-        ).pack(pady=(0, 15))
+        ).pack()
         
         # Bind Enter and Escape keys
         error_dialog.bind('<Return>', lambda event: close_dialog())
