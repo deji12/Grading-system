@@ -3,6 +3,8 @@ import json
 import time
 import csv
 from dummy_data import data
+from pathlib import Path
+import shutil
 
 CLASSES_ROOT_DIR = 'classes'
 
@@ -30,6 +32,8 @@ def save_formatted_data(data, execute_calculations):
     
     class_name = data['class']['name']
     class_group = data['class']['group']
+    
+    os.makedirs(f'{CLASSES_ROOT_DIR}/{class_name}', exist_ok=True)
     class_path = os.path.join(CLASSES_ROOT_DIR, class_name)
 
     _create_required_folders_for_class(class_path)
@@ -46,3 +50,13 @@ def save_to_csv(data, file_destination, field_names):
         writer = csv.DictWriter(file, fieldnames=field_names)
         writer.writeheader()
         writer.writerows(data)
+
+def reset_grading_session():
+
+    folder = Path(CLASSES_ROOT_DIR)
+
+    for item in folder.iterdir():
+        if item.is_file() or item.is_symlink():
+            item.unlink()  # Deletes files or symbolic links
+        elif item.is_dir():
+            shutil.rmtree(item)  # Deletes subdirectories and their contents

@@ -3,11 +3,16 @@ from tkinter import messagebox
 import customtkinter as ctk
 from formatter import format_user_input
 import threading    
+import os
 from utils import (
     load_config, create_required_folders, 
-    save_formatted_data
+    save_formatted_data, reset_grading_session
 )
 from grade_calculations import execute_calculations
+
+# Set appearance and theme
+ctk.set_appearance_mode("light")
+ctk.set_default_color_theme("blue")
 
 class BeautifulSchoolSessionForm:
     def __init__(self, root):
@@ -15,19 +20,13 @@ class BeautifulSchoolSessionForm:
         self.config = load_config()
         self.root = root
         self.root.title("School Session Form")
-        self.root.geometry("720x600")
-        self.root.minsize(600, 450)
-
+        
+        # Don't set full screen here - do it after UI is built
+        # We'll call it at the end of __init__
+        
         # Configure main grid (1 column, 1 row, expand)
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid_rowconfigure(0, weight=1)
-
-        # Session data
-        self.sessions = [
-            "2020/2021", "2021/2022", "2022/2023",
-            "2023/2024", "2024/2025", "2025/2026"
-        ]
-        self.terms = ["First", "Second", "Third"]
 
         # ---------- Main container (card) ----------
         self.mainframe = ctk.CTkFrame(
@@ -86,68 +85,9 @@ class BeautifulSchoolSessionForm:
         )
         self.text_area.grid(row=3, column=0, padx=15, pady=(0, 15), sticky="nsew")
 
-        # ---------- Controls row (session + term) ----------
-        self.controls_frame = ctk.CTkFrame(self.mainframe, fg_color="transparent")
-        self.controls_frame.grid(row=4, column=0, padx=15, pady=(0, 15), sticky="ew")
-        self.controls_frame.grid_columnconfigure(1, weight=1)   # spacer
-        self.controls_frame.grid_columnconfigure(3, weight=0)
-
-        # Session dropdown
-        self.session_label = ctk.CTkLabel(
-            self.controls_frame,
-            text="Session",
-            font=ctk.CTkFont(size=13, weight="bold")
-        )
-        self.session_label.grid(row=0, column=0, padx=(0, 10), sticky="w")
-
-        self.session_combo = ctk.CTkComboBox(
-            self.controls_frame,
-            values=self.sessions,
-            width=210,
-            corner_radius=10,
-            state="readonly",
-            dropdown_font=ctk.CTkFont(size=12),
-            font=ctk.CTkFont(size=12)
-        )
-        self.session_combo.grid(row=0, column=1, padx=(0, 5), sticky="w")
-        self.session_combo.set(self.sessions[-1])
-
-        # Add session button (with plus symbol)
-        self.add_session_btn = ctk.CTkButton(
-            self.controls_frame,
-            text="➕",                # Unicode heavy plus sign
-            width=40,
-            corner_radius=10,
-            fg_color="#0078d4",
-            hover_color="#005a9e",
-            font=ctk.CTkFont(size=16, weight="bold"),
-            command=self.open_add_session_popup
-        )
-        self.add_session_btn.grid(row=0, column=2, padx=(0, 25), sticky="w")
-
-        # Term dropdown
-        self.term_label = ctk.CTkLabel(
-            self.controls_frame,
-            text="Term",
-            font=ctk.CTkFont(size=13, weight="bold")
-        )
-        self.term_label.grid(row=0, column=3, padx=(0, 10), sticky="w")
-
-        self.term_combo = ctk.CTkComboBox(
-            self.controls_frame,
-            values=self.terms,
-            width=150,
-            corner_radius=10,
-            state="readonly",
-            dropdown_font=ctk.CTkFont(size=12),
-            font=ctk.CTkFont(size=12)
-        )
-        self.term_combo.grid(row=0, column=4, sticky="w")
-        self.term_combo.set(self.terms[0])
-
-        # ---------- Bottom row (submit + dark mode switch) ----------
+        # ---------- Bottom row (submit + reset + dark mode switch) ----------
         self.bottom_frame = ctk.CTkFrame(self.mainframe, fg_color="transparent")
-        self.bottom_frame.grid(row=5, column=0, padx=15, pady=(0, 10), sticky="ew")
+        self.bottom_frame.grid(row=4, column=0, padx=15, pady=(0, 10), sticky="ew")
         self.bottom_frame.grid_columnconfigure(0, weight=1)
 
         # Submit button (prominent)
@@ -164,6 +104,25 @@ class BeautifulSchoolSessionForm:
         )
         self.submit_btn.grid(row=0, column=0, padx=(0, 10), sticky="w")
 
+        # Check if classes directory exists and is not empty
+        classes_dir = "classes"
+        show_reset_button = os.path.exists(classes_dir) and len(os.listdir(classes_dir)) > 0
+
+        # Reset button (red) - only shown if classes directory is not empty
+        if show_reset_button:
+            self.reset_btn = ctk.CTkButton(
+                self.bottom_frame,
+                text="Reset Session",
+                font=ctk.CTkFont(size=13, weight="bold"),
+                corner_radius=12,
+                height=40,
+                width=130,
+                fg_color="#dc3545",  # Red color
+                hover_color="#c82333",
+                command=self.confirm_reset
+            )
+            self.reset_btn.grid(row=0, column=1, padx=(0, 10), sticky="w")
+
         # Dark mode switch (modern)
         self.dark_mode_var = tk.BooleanVar(value=False)
         self.dark_mode_switch = ctk.CTkSwitch(
@@ -176,7 +135,20 @@ class BeautifulSchoolSessionForm:
             button_color="#0078d4",
             button_hover_color="#005a9e"
         )
-        self.dark_mode_switch.grid(row=0, column=1, padx=10, sticky="e")
+        self.dark_mode_switch.grid(row=0, column=2, padx=10, sticky="e")
+        
+        # NOW set the window to full screen/maximized after all UI elements are created
+        self.root.after(10, self.maximize_window)  # Small delay to ensure proper rendering
+
+    def maximize_window(self):
+        """Set the window to maximized/full screen."""
+        try:
+            self.root.state('zoomed')  # Windows
+        except:
+            try:
+                self.root.attributes('-fullscreen', True)  # Alternative for some systems
+            except:
+                pass  # Fall back to default size if both fail
 
     def toggle_appearance(self):
         """Switch between light and dark mode."""
@@ -185,78 +157,220 @@ class BeautifulSchoolSessionForm:
         else:
             ctk.set_appearance_mode("light")
 
-    def open_add_session_popup(self):
-        """Opens a modern popup to add a new session."""
-        popup = ctk.CTkToplevel(self.root)
-        popup.title("Add New Session")
-        popup.geometry("360x200")
-        popup.resizable(False, False)
-        popup.transient(self.root)
-        popup.grab_set()
-        popup.focus_set()
+    def confirm_reset(self):
+        """Show confirmation dialog before resetting."""
+        result = messagebox.askyesno(
+            "Confirm Reset",
+            "⚠️ WARNING: This will permanently delete ALL grading session data.\n\n"
+            "This action cannot be undone. Are you sure you want to continue?",
+            icon='warning'
+        )
+        
+        if result:
+            self.process_reset()
 
-        # Center popup
-        popup.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (360 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (200 // 2)
-        popup.geometry(f"+{x}+{y}")
+    def safe_destroy(self, widget):
+        """Safely destroy a widget and handle any errors."""
+        try:
+            if widget and widget.winfo_exists():
+                # Cancel any pending after callbacks
+                try:
+                    for after_id in getattr(widget, '_after_ids', []):
+                        widget.after_cancel(after_id)
+                except:
+                    pass
+                
+                # Remove grab and withdraw before destroying
+                try:
+                    widget.grab_release()
+                except:
+                    pass
+                
+                # Destroy the widget
+                widget.destroy()
+        except:
+            pass  # Ignore any errors during destruction
 
-        # Instruction
-        label = ctk.CTkLabel(
-            popup,
-            text="Enter new session (e.g., 2026/2027):",
+    def process_reset(self):
+        """Process the reset with loading animation."""
+        
+        # Create loading dialog
+        loading_dialog = ctk.CTkToplevel(self.root)
+        loading_dialog.title("Resetting")
+        loading_dialog.geometry("300x150")
+        loading_dialog.resizable(False, False)
+        loading_dialog.transient(self.root)
+        loading_dialog.grab_set()
+        
+        # Center the loading dialog
+        loading_dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (300 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (150 // 2)
+        loading_dialog.geometry(f"+{x}+{y}")
+        
+        # Configure dialog to prevent the title bar color issue
+        loading_dialog.attributes('-alpha', 0.99)
+        
+        # Loading spinner
+        spinner = ctk.CTkProgressBar(loading_dialog, mode="indeterminate", width=200)
+        spinner.pack(pady=(30, 10))
+        spinner.start()
+        
+        # Loading text
+        loading_label = ctk.CTkLabel(
+            loading_dialog, 
+            text="Deleting grading session...",
             font=ctk.CTkFont(size=13)
         )
-        label.pack(pady=(20, 5))
+        loading_label.pack()
+        
+        # Variable to store result
+        result = {"success": False, "error": None}
+        
+        # Flag to track if dialog is still active
+        dialog_active = True
+        
+        def run_reset():
+            """Run the reset in a separate thread."""
+            try:
+                # Call the reset function
+                reset_grading_session()
+                result["success"] = True
+            except Exception as e:
+                result["error"] = str(e)
+            finally:
+                # Schedule the UI update on the main thread
+                if dialog_active:
+                    loading_dialog.after(0, on_reset_complete)
+        
+        def on_reset_complete():
+            """Called when reset is complete (runs on main thread)."""
+            nonlocal dialog_active
+            dialog_active = False
+            
+            # Cancel spinner animation
+            try:
+                if hasattr(spinner, '_after_id') and spinner._after_id:
+                    loading_dialog.after_cancel(spinner._after_id)
+            except:
+                pass
+            
+            # Store reference to dialog before destroying
+            dialog_to_destroy = loading_dialog
+            
+            # Schedule destruction with a tiny delay to allow any pending callbacks to complete
+            def do_destroy():
+                self.safe_destroy(dialog_to_destroy)
+                
+                # Now show result
+                if result["error"]:
+                    # Show error message
+                    self.root.after(10, lambda: messagebox.showerror(
+                        "Error",
+                        f"An error occurred while resetting:\n\n{result['error']}"
+                    ))
+                else:
+                    # Show success message
+                    self.root.after(10, lambda: self.show_reset_success_dialog())
+                    
+                    # Refresh the UI to hide reset button if classes directory is now empty
+                    self.root.after(20, self.refresh_reset_button)
+            
+            # Use after with a small delay to avoid the title bar color issue
+            loading_dialog.after(50, do_destroy)
+        
+        # Start the reset in a background thread
+        thread = threading.Thread(target=run_reset)
+        thread.daemon = True
+        thread.start()
 
-        # Entry
-        entry_var = tk.StringVar()
-        entry = ctk.CTkEntry(
-            popup,
-            textvariable=entry_var,
-            width=260,
-            corner_radius=10,
-            placeholder_text="e.g. 2026/2027"
-        )
-        entry.pack(pady=5, padx=20)
-        entry.focus()
+    def show_reset_success_dialog(self):
+        """Show success message for reset."""
+        success_dialog = ctk.CTkToplevel(self.root)
+        success_dialog.title("Success")
+        success_dialog.geometry("300x150")
+        success_dialog.resizable(False, False)
+        success_dialog.transient(self.root)
+        success_dialog.grab_set()
+        
+        # Center success dialog
+        success_dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (300 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (150 // 2)
+        success_dialog.geometry(f"+{x}+{y}")
+        
+        # Configure dialog to prevent the title bar color issue
+        success_dialog.attributes('-alpha', 0.99)
+        
+        # Success message
+        ctk.CTkLabel(
+            success_dialog,
+            text="✅",
+            font=ctk.CTkFont(size=48)
+        ).pack(pady=(20, 5))
+        
+        ctk.CTkLabel(
+            success_dialog,
+            text="Grading session deleted successfully!",
+            font=ctk.CTkFont(size=14, weight="bold")
+        ).pack()
+        
+        # Store the after ID so we can cancel it if needed
+        after_id = None
+        
+        def close_dialog():
+            """Close the dialog and cancel any pending callbacks."""
+            nonlocal after_id
+            if after_id:
+                try:
+                    success_dialog.after_cancel(after_id)
+                except:
+                    pass
+            self.safe_destroy(success_dialog)
+        
+        ctk.CTkButton(
+            success_dialog,
+            text="OK",
+            width=100,
+            command=close_dialog
+        ).pack(pady=15)
+        
+        # Auto-close after 2 seconds - store the ID
+        after_id = success_dialog.after(2000, close_dialog)
+        
+        # Make sure to clean up if dialog is closed manually
+        def on_closing():
+            nonlocal after_id
+            if after_id:
+                try:
+                    success_dialog.after_cancel(after_id)
+                except:
+                    pass
+            self.safe_destroy(success_dialog)
+        
+        success_dialog.protocol("WM_DELETE_WINDOW", on_closing)
+        
+        print("\n" + "="*50)
+        print("GRADING SESSION RESET")
+        print("All grading data has been deleted.")
+        print("="*50 + "\n")
 
-        # Error label
-        error_label = ctk.CTkLabel(popup, text="", text_color="red", font=ctk.CTkFont(size=11))
-        error_label.pack()
-
-        def add_session():
-            new_session = entry_var.get().strip()
-            if not new_session:
-                error_label.configure(text="Please enter a session.")
-                return
-            if new_session in self.sessions:
-                error_label.configure(text="Session already exists.")
-                return
-            self.sessions.append(new_session)
-            self.session_combo.configure(values=self.sessions)
-            self.session_combo.set(new_session)
-            popup.destroy()
-
-        # Add button
-        add_btn = ctk.CTkButton(
-            popup,
-            text="Add Session",
-            corner_radius=10,
-            font=ctk.CTkFont(size=13, weight="bold"),
-            fg_color="#0078d4",
-            hover_color="#005a9e",
-            command=add_session
-        )
-        add_btn.pack(pady=10)
-
-        popup.bind('<Return>', lambda event: add_session())
+    def refresh_reset_button(self):
+        """Check if reset button should still be visible and update UI accordingly."""
+        classes_dir = "classes"
+        show_reset_button = os.path.exists(classes_dir) and len(os.listdir(classes_dir)) > 0
+        
+        # Check if reset button exists and if it should be shown/hidden
+        if hasattr(self, 'reset_btn'):
+            if not show_reset_button:
+                # Hide and destroy the reset button if it exists
+                self.reset_btn.grid_forget()
+                self.reset_btn.destroy()
+                delattr(self, 'reset_btn')
 
     def submit(self):
         """Show a confirmation dialog with scrollable preview before final submission."""
         notes = self.text_area.get("1.0", tk.END).strip()
-        session = self.session_combo.get()
-        term = self.term_combo.get()
         
         # Create confirmation dialog
         confirm_dialog = ctk.CTkToplevel(self.root)
@@ -275,6 +389,9 @@ class BeautifulSchoolSessionForm:
         x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (500 // 2)
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (450 // 2)
         confirm_dialog.geometry(f"+{x}+{y}")
+        
+        # Configure dialog to prevent title bar issues
+        confirm_dialog.attributes('-alpha', 0.99)
         
         # Configure grid for the dialog
         confirm_dialog.grid_columnconfigure(0, weight=1)
@@ -312,16 +429,12 @@ class BeautifulSchoolSessionForm:
         
         # Format the preview content nicely
         preview_content = f"""
-📋 SESSION INFORMATION:
-• Session: {session}
-• Term: {term}
-
 📝 NOTES:
 {'-' * 50}
 {notes if notes else "(No notes entered)"}
 {'-' * 50}
 
-Please confirm that all information above is correct.
+Please confirm that the information above is correct.
         """
         
         preview_text.insert("1.0", preview_content)
@@ -342,17 +455,17 @@ Please confirm that all information above is correct.
             height=40,
             fg_color="#6c757d",
             hover_color="#5a6268",
-            command=confirm_dialog.destroy
+            command=lambda: self.safe_destroy(confirm_dialog)
         )
         cancel_btn.grid(row=0, column=0, padx=(0, 10), sticky="e")
         
         # Confirm button
         def confirm_and_submit():
             """Called when user confirms the input."""
-            confirm_dialog.destroy()
+            self.safe_destroy(confirm_dialog)
             
             # Now process the actual submission
-            self.process_submission(notes, session, term)
+            self.process_submission(notes)
         
         confirm_btn = ctk.CTkButton(
             buttons_frame,
@@ -369,9 +482,9 @@ Please confirm that all information above is correct.
         # Bind Enter key to confirm
         confirm_dialog.bind('<Return>', lambda event: confirm_and_submit())
         # Bind Escape key to cancel
-        confirm_dialog.bind('<Escape>', lambda event: confirm_dialog.destroy())
+        confirm_dialog.bind('<Escape>', lambda event: self.safe_destroy(confirm_dialog))
 
-    def process_submission(self, notes, session, term):
+    def process_submission(self, notes):
         """Process the confirmed submission with loading animation (non-blocking)."""
         
         # Create loading dialog
@@ -387,6 +500,9 @@ Please confirm that all information above is correct.
         x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (300 // 2)
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (150 // 2)
         loading_dialog.geometry(f"+{x}+{y}")
+        
+        # Configure dialog to prevent title bar issues
+        loading_dialog.attributes('-alpha', 0.99)
         
         # Loading spinner
         spinner = ctk.CTkProgressBar(loading_dialog, mode="indeterminate", width=200)
@@ -404,6 +520,9 @@ Please confirm that all information above is correct.
         # Variable to store result
         result = {"data": None, "error": None}
         
+        # Flag to track if dialog is still active
+        dialog_active = True
+        
         def run_api_call():
             """Run the API call in a separate thread."""
             try:
@@ -415,26 +534,47 @@ Please confirm that all information above is correct.
                 result["error"] = str(e)
             finally:
                 # Schedule the UI update on the main thread
-                loading_dialog.after(0, on_api_complete)
+                if dialog_active:
+                    loading_dialog.after(0, on_api_complete)
         
         def on_api_complete():
             """Called when API call is complete (runs on main thread)."""
-            # Close loading dialog
-            loading_dialog.destroy()
+            nonlocal dialog_active
+            dialog_active = False
             
-            if result["error"]:
-                # Show error message
-                messagebox.showerror(
-                    "Error",
-                    f"An error occurred while processing:\n\n{result['error']}"
-                )
-            else:
-                # Show success message
-                self.show_success_dialog(result["data"])
+            # Cancel spinner animation
+            try:
+                if hasattr(spinner, '_after_id') and spinner._after_id:
+                    loading_dialog.after_cancel(spinner._after_id)
+            except:
+                pass
+            
+            # Store reference to dialog before destroying
+            dialog_to_destroy = loading_dialog
+            
+            # Schedule destruction with a tiny delay
+            def do_destroy():
+                self.safe_destroy(dialog_to_destroy)
+                
+                if result["error"]:
+                    # Show error message
+                    self.root.after(10, lambda: messagebox.showerror(
+                        "Error",
+                        f"An error occurred while processing:\n\n{result['error']}"
+                    ))
+                else:
+                    # Show success message
+                    self.root.after(10, lambda: self.show_success_dialog(result["data"]))
+                    
+                    # Refresh reset button visibility (classes directory now has data)
+                    self.root.after(20, self.refresh_reset_button)
+            
+            # Use after with a small delay
+            loading_dialog.after(50, do_destroy)
         
         # Start the API call in a background thread
         thread = threading.Thread(target=run_api_call)
-        thread.daemon = True  # Thread will close when main program closes
+        thread.daemon = True
         thread.start()
 
     def show_success_dialog(self, formatted_data):
@@ -442,6 +582,7 @@ Please confirm that all information above is correct.
         success_dialog = ctk.CTkToplevel(self.root)
         success_dialog.title("Success")
         success_dialog.geometry("300x150")
+        success_dialog.resizable(False, False)
         success_dialog.transient(self.root)
         success_dialog.grab_set()
         
@@ -450,6 +591,9 @@ Please confirm that all information above is correct.
         x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (300 // 2)
         y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (150 // 2)
         success_dialog.geometry(f"+{x}+{y}")
+        
+        # Configure dialog to prevent title bar issues
+        success_dialog.attributes('-alpha', 0.99)
         
         # Success message
         ctk.CTkLabel(
@@ -464,15 +608,39 @@ Please confirm that all information above is correct.
             font=ctk.CTkFont(size=14, weight="bold")
         ).pack()
         
+        # Store the after ID
+        after_id = None
+        
+        def close_dialog():
+            nonlocal after_id
+            if after_id:
+                try:
+                    success_dialog.after_cancel(after_id)
+                except:
+                    pass
+            self.safe_destroy(success_dialog)
+        
         ctk.CTkButton(
             success_dialog,
             text="OK",
             width=100,
-            command=success_dialog.destroy
+            command=close_dialog
         ).pack(pady=15)
         
         # Auto-close after 2 seconds
-        success_dialog.after(2000, success_dialog.destroy)
+        after_id = success_dialog.after(2000, close_dialog)
+        
+        # Handle manual close
+        def on_closing():
+            nonlocal after_id
+            if after_id:
+                try:
+                    success_dialog.after_cancel(after_id)
+                except:
+                    pass
+            self.safe_destroy(success_dialog)
+        
+        success_dialog.protocol("WM_DELETE_WINDOW", on_closing)
         
         # Print to console
         print("\n" + "="*50)
