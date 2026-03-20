@@ -19,7 +19,7 @@ class BeautifulSchoolSessionForm:
         create_required_folders()
 
         self.root = root
-        self.root.title("School Session Form")
+        self.root.title("GradeFlow")
         
         try:
             self.config = load_config()
@@ -58,7 +58,7 @@ class BeautifulSchoolSessionForm:
 
         self.header_label = ctk.CTkLabel(
             self.header_frame,
-            text="School Session Form",
+            text="GradeFlow",
             font=ctk.CTkFont(family="Segoe UI", size=26, weight="bold"),
             text_color=("#1e3c72", "#d0e0ff")  # dark blue / light blue
         )
@@ -93,7 +93,7 @@ class BeautifulSchoolSessionForm:
         )
         self.text_area.grid(row=3, column=0, padx=15, pady=(0, 15), sticky="nsew")
 
-        # ---------- Bottom row (submit + reset + dark mode switch) ----------
+        # ---------- Bottom row (submit + reset + dark mode switch + instructions) ----------
         self.bottom_frame = ctk.CTkFrame(self.mainframe, fg_color="transparent")
         self.bottom_frame.grid(row=4, column=0, padx=15, pady=(0, 10), sticky="ew")
         self.bottom_frame.grid_columnconfigure(0, weight=1)
@@ -131,6 +131,20 @@ class BeautifulSchoolSessionForm:
             )
             self.reset_btn.grid(row=0, column=1, padx=(0, 10), sticky="w")
 
+        # Instructions button
+        self.instructions_btn = ctk.CTkButton(
+            self.bottom_frame,
+            text="📖 Instructions",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            corner_radius=12,
+            height=40,
+            width=120,
+            fg_color="#6c757d",  # Gray color
+            hover_color="#5a6268",
+            command=self.show_instructions
+        )
+        self.instructions_btn.grid(row=0, column=2, padx=(0, 10), sticky="w")
+
         # Dark mode switch (modern)
         self.dark_mode_var = tk.BooleanVar(value=False)
         self.dark_mode_switch = ctk.CTkSwitch(
@@ -143,7 +157,7 @@ class BeautifulSchoolSessionForm:
             button_color="#0078d4",
             button_hover_color="#005a9e"
         )
-        self.dark_mode_switch.grid(row=0, column=2, padx=10, sticky="e")
+        self.dark_mode_switch.grid(row=0, column=3, padx=10, sticky="e")
         
         # NOW set the window to full screen/maximized after all UI elements are created
         self.root.after(10, self.maximize_window)  # Small delay to ensure proper rendering
@@ -165,6 +179,180 @@ class BeautifulSchoolSessionForm:
         else:
             ctk.set_appearance_mode("light")
 
+    def show_instructions(self):
+        """Display a clean and well-formatted instructions dialog."""
+
+        # Get screen dimensions
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+
+        # Dialog size
+        dialog_width = min(800, int(screen_width * 0.7))
+        dialog_height = min(700, int(screen_height * 0.8))
+
+        dialog_width = max(600, dialog_width)
+        dialog_height = max(500, dialog_height)
+
+        # Create dialog
+        instructions_dialog = ctk.CTkToplevel(self.root)
+        instructions_dialog.title("How to Use - Grading App")
+        instructions_dialog.geometry(f"{dialog_width}x{dialog_height}")
+        instructions_dialog.resizable(True, True)
+        instructions_dialog.minsize(550, 450)
+        instructions_dialog.transient(self.root)
+        instructions_dialog.grab_set()
+
+        # Center dialog
+        instructions_dialog.update_idletasks()
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (dialog_width // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (dialog_height // 2)
+        instructions_dialog.geometry(f"+{x}+{y}")
+
+        # Layout config
+        instructions_dialog.grid_columnconfigure(0, weight=1)
+        instructions_dialog.grid_rowconfigure(0, weight=1)
+
+        main_container = ctk.CTkFrame(instructions_dialog, fg_color="transparent")
+        main_container.grid(row=0, column=0, padx=20, pady=20, sticky="nsew")
+        main_container.grid_columnconfigure(0, weight=1)
+        main_container.grid_rowconfigure(1, weight=1)
+
+        # Header
+        header_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        header_frame.grid(row=0, column=0, pady=(0, 15), sticky="ew")
+
+        ctk.CTkLabel(
+            header_frame,
+            text="📖 How to Use Grading App",
+            font=ctk.CTkFont(size=22, weight="bold")
+        ).pack()
+
+        ctk.CTkLabel(
+            header_frame,
+            text="Smart School Assessment Tool",
+            font=ctk.CTkFont(size=12),
+            text_color="gray"
+        ).pack()
+
+        # Content
+        content_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        content_frame.grid(row=1, column=0, sticky="nsew")
+        content_frame.grid_columnconfigure(0, weight=1)
+        content_frame.grid_rowconfigure(0, weight=1)
+
+        scrollable_text = ctk.CTkTextbox(
+            content_frame,
+            wrap="word",
+            font=ctk.CTkFont(family="Consolas", size=12),  # ✅ fixed font
+            corner_radius=10,
+            border_width=1
+        )
+        scrollable_text.grid(row=0, column=0, sticky="nsew")
+
+        instructions = """
+=== GETTING STARTED ===
+
+📝 DATA INPUT FORMAT
+
+SS2F Report (Third Term)
+1st position - Orjiakor Chisom Perpetual . Ave- 86.7
+2nd position - Nweke Miracle Onyinye. Ave- 82.4
+3rd position - Odinchefu Uchechukwu. Ave- 71.7
+
+BEST IN SUBJECTS
+1. English language - Omaba Favour Iruoma. Score- 78
+2. Mathematics - Ezeh Chioma Mary Cynthia. Score- 72
+3. Igbo - Amaechi Judith - 76
+
+MOST IMPROVED
+1. Ezechukwu Oluebube - 41st to 37th
+2. Ezeogu Ifeoma - 37th to 5th
+
+----------------------------------------
+
+🔑 REQUIRED SECTIONS
+
+• Class Header (e.g. SS2F Report - Third Term)
+• Top 3 Positions with averages
+• BEST IN SUBJECTS section
+• MOST IMPROVED section
+
+----------------------------------------
+
+💡 HOW TO USE
+
+1. Paste your student data
+2. Click "Submit"
+3. Confirm your input
+4. Wait for processing
+5. View and save results
+
+----------------------------------------
+
+🌐 INTERNET REQUIRED
+
+This app uses AI to process student data.
+Ensure you have an active internet connection.
+
+----------------------------------------
+
+🔄 RESET SESSION (WARNING)
+
+Deletes ALL saved data permanently:
+• Reports
+• Statistics
+• Results
+
+This action cannot be undone.
+
+----------------------------------------
+
+🌙 DARK MODE
+
+Toggle dark mode for better visibility.
+
+----------------------------------------
+
+❗ TROUBLESHOOTING
+
+• Invalid format → Check required sections
+• Network error → Check internet
+• API error → Verify config.json
+
+----------------------------------------
+
+📞 SUPPORT
+
+Ayodeji Adesola
+Built with ❤️ for educators
+"""
+
+        scrollable_text.insert("1.0", instructions)
+        scrollable_text.configure(state="disabled")
+
+        # Close button
+        def close_dialog():
+            instructions_dialog.destroy()
+
+        button_frame = ctk.CTkFrame(main_container, fg_color="transparent")
+        button_frame.grid(row=2, column=0, pady=(15, 0), sticky="ew")
+
+        ctk.CTkButton(
+            button_frame,
+            text="Got it!",
+            width=120,
+            height=40,
+            font=ctk.CTkFont(size=14, weight="bold"),
+            corner_radius=10,
+            fg_color="#28a745",
+            hover_color="#218838",
+            command=close_dialog
+        ).pack()
+
+        # Key bindings
+        instructions_dialog.bind('<Return>', lambda event: close_dialog())
+        instructions_dialog.bind('<Escape>', lambda event: close_dialog())
+    
     def confirm_reset(self):
         """Show confirmation dialog before resetting."""
         result = messagebox.askyesno(

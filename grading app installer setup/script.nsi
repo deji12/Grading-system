@@ -2,7 +2,7 @@
 
 Name "Grading App"
 InstallDir "$DESKTOP\Grading App"
-OutFile "GradingAppSetup.exe"
+OutFile "GradingApp_Setup.exe"
 
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_LICENSE "license.txt"
