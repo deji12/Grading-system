@@ -1221,75 +1221,59 @@ Scroll for full example. Check your input and try again."""
         error_dialog.bind('<Escape>', lambda event: close_dialog())
 
     def show_success_dialog(self, formatted_data):
-        """Show success message."""
+        """Show success message with OK button (no auto-close)."""
 
         # Clear the text area
         self.text_area.delete("1.0", tk.END)
 
         success_dialog = ctk.CTkToplevel(self.root)
         success_dialog.title("Success")
-        success_dialog.geometry("300x150")
+        success_dialog.geometry("350x200")
         success_dialog.resizable(False, False)
         success_dialog.transient(self.root)
         success_dialog.grab_set()
-        
-        # Center success dialog
+
+        # Center the dialog
         success_dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (300 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (150 // 2)
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (350 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (200 // 2)
         success_dialog.geometry(f"+{x}+{y}")
-        
-        # Configure dialog to prevent title bar issues
+
         success_dialog.attributes('-alpha', 0.99)
-        
-        # Success message
+
+        # Success icon
         ctk.CTkLabel(
             success_dialog,
             text="✅",
             font=ctk.CTkFont(size=48)
         ).pack(pady=(20, 5))
-        
+
+        # Success message
         ctk.CTkLabel(
             success_dialog,
-            text="Form submitted successfully!",
+            text="Data added and calculated successfully!",
             font=ctk.CTkFont(size=14, weight="bold")
         ).pack()
-        
-        # Store the after ID
-        after_id = None
-        
+
+        # OK button
         def close_dialog():
-            nonlocal after_id
-            if after_id:
-                try:
-                    success_dialog.after_cancel(after_id)
-                except:
-                    pass
-            self.safe_destroy(success_dialog)
-        
+            success_dialog.destroy()
+
         ctk.CTkButton(
             success_dialog,
             text="OK",
             width=100,
             command=close_dialog
         ).pack(pady=15)
-        
-        # Auto-close after 2 seconds
-        after_id = success_dialog.after(2000, close_dialog)
-        
-        # Handle manual close
-        def on_closing():
-            nonlocal after_id
-            if after_id:
-                try:
-                    success_dialog.after_cancel(after_id)
-                except:
-                    pass
-            self.safe_destroy(success_dialog)
-        
-        success_dialog.protocol("WM_DELETE_WINDOW", on_closing)
-        
-        # Print to console
+
+        # Keyboard shortcuts
+        success_dialog.bind('<Return>', lambda event: close_dialog())
+        success_dialog.bind('<Escape>', lambda event: close_dialog())
+
+        # Handle manual X button
+        success_dialog.protocol("WM_DELETE_WINDOW", close_dialog)
+
+        # (Optional) Keep print for debugging
         print("\n" + "="*50)
         print("FORM SUBMITTED:")
         print(formatted_data)

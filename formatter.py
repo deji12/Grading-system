@@ -45,7 +45,7 @@ def is_valid_raw_input(user_input):
         "Report",
         "position",
         "BEST IN SUBJECTS",
-        "MOST IMPROVED"
+        # "MOST IMPROVED"
     ]
     # If any keyword is missing, input is invalid
     return all(keyword in user_input for keyword in required_keywords)
