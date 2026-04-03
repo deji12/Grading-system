@@ -6,7 +6,8 @@ import threading
 import os
 from utils import (
     load_config, create_required_folders, 
-    save_formatted_data, reset_grading_session
+    save_formatted_data, reset_grading_session,
+    CLASSES_ROOT_DIR
 )
 from grade_calculations import execute_calculations
 
@@ -1221,22 +1222,21 @@ Scroll for full example. Check your input and try again."""
         error_dialog.bind('<Escape>', lambda event: close_dialog())
 
     def show_success_dialog(self, formatted_data):
-        """Show success message with OK button (no auto-close)."""
-
+        """Show success message with OK button and option to open reports folder."""
         # Clear the text area
         self.text_area.delete("1.0", tk.END)
 
         success_dialog = ctk.CTkToplevel(self.root)
         success_dialog.title("Success")
-        success_dialog.geometry("350x200")
+        success_dialog.geometry("420x250")  # Wider for two buttons
         success_dialog.resizable(False, False)
         success_dialog.transient(self.root)
         success_dialog.grab_set()
 
         # Center the dialog
         success_dialog.update_idletasks()
-        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (350 // 2)
-        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (200 // 2)
+        x = self.root.winfo_x() + (self.root.winfo_width() // 2) - (420 // 2)
+        y = self.root.winfo_y() + (self.root.winfo_height() // 2) - (250 // 2)
         success_dialog.geometry(f"+{x}+{y}")
 
         success_dialog.attributes('-alpha', 0.99)
@@ -1255,16 +1255,44 @@ Scroll for full example. Check your input and try again."""
             font=ctk.CTkFont(size=14, weight="bold")
         ).pack()
 
-        # OK button
+        # Button frame for horizontal layout
+        button_frame = ctk.CTkFrame(success_dialog, fg_color="transparent")
+        button_frame.pack(pady=15)
+
+        # Function to open the classes folder in file explorer
+        def open_reports_folder():
+            import subprocess
+            import sys
+            folder_path = os.path.abspath(CLASSES_ROOT_DIR)  # from utils import CLASSES_ROOT_DIR
+            if not os.path.exists(folder_path):
+                return
+            if sys.platform == 'win32':
+                os.startfile(folder_path)
+            elif sys.platform == 'darwin':  # macOS
+                subprocess.run(['open', folder_path])
+            else:  # Linux / Unix
+                subprocess.run(['xdg-open', folder_path])
+
+        # "Open Reports Folder" button
+        open_btn = ctk.CTkButton(
+            button_frame,
+            text="📁 Open Reports Folder",
+            width=160,
+            command=open_reports_folder
+        )
+        open_btn.pack(side="left", padx=(0, 10))
+
+        # OK button (closes dialog)
         def close_dialog():
             success_dialog.destroy()
 
-        ctk.CTkButton(
-            success_dialog,
+        ok_btn = ctk.CTkButton(
+            button_frame,
             text="OK",
             width=100,
             command=close_dialog
-        ).pack(pady=15)
+        )
+        ok_btn.pack(side="left")
 
         # Keyboard shortcuts
         success_dialog.bind('<Return>', lambda event: close_dialog())
@@ -1273,7 +1301,7 @@ Scroll for full example. Check your input and try again."""
         # Handle manual X button
         success_dialog.protocol("WM_DELETE_WINDOW", close_dialog)
 
-        # (Optional) Keep print for debugging
+        # Debug print
         print("\n" + "="*50)
         print("FORM SUBMITTED:")
         print(formatted_data)
