@@ -117,6 +117,16 @@
             "id": 23,
             "name": "National Values",
             "potential_abbreviation": "Nat-Val"
+        },
+            {
+            "id": 24,
+            "name": "Igbo",
+            "potential_abbreviation": "igbo"
+        },
+        {
+            "id": 25,
+            "name": "Pre-vocational study",
+            "potential_abbreviation": "pvs"
         }
     ]
 }

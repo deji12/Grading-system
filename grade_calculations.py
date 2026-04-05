@@ -147,8 +147,8 @@ def generate_all_word_reports():
 def _get_overall_best_by_n(class_data_path, config):
     subject_lookup = _get_subject_lookup(config)
 
-    # Find the best score per subject across all class group files
-    subject_best = {}
+    # For each subject, keep list of students with the max score
+    subject_best = {}  # subject_id -> {"max_score": int, "students": [{"name": str, "class": str}]}
     for file in Path(class_data_path).glob("*.json"):
         with open(file, "r") as f:
             data = json.load(f)
@@ -165,18 +165,29 @@ def _get_overall_best_by_n(class_data_path, config):
                 continue
 
             existing = subject_best.get(subject_id)
-            if existing is None or score > existing["score"]:
-                subject_best[subject_id] = {"name": name, "score": score, "class": class_label}
+            if existing is None:
+                subject_best[subject_id] = {"max_score": score, "students": [{"name": name, "class": class_label}]}
+            else:
+                if score > existing["max_score"]:
+                    subject_best[subject_id] = {"max_score": score, "students": [{"name": name, "class": class_label}]}
+                elif score == existing["max_score"]:
+                    # Add this student as a co‑winner (avoid duplicates if same student appears twice)
+                    if not any(s["name"] == name and s["class"] == class_label for s in existing["students"]):
+                        subject_best[subject_id]["students"].append({"name": name, "class": class_label})
 
-    # Group best subjects per student + class label, keyed by number of subjects
-    overall_best_by_n = {}
-    by_student = {}
+    # Group by student: count how many subjects they are best in
+    student_subjects = {}  # key (name, class) -> list of subject names
     for subject_id, info in subject_best.items():
-        key = (info["name"], info["class"])
-        by_student.setdefault(key, []).append(subject_lookup.get(subject_id, "Unknown"))
+        subject_name = subject_lookup.get(subject_id, "Unknown")
+        for student in info["students"]:
+            key = (student["name"], student["class"])
+            student_subjects.setdefault(key, []).append(subject_name)
 
-    for key, subjects in by_student.items():
-        overall_best_by_n.setdefault(len(subjects), {})[key] = subjects
+    # Build overall_best_by_n: n -> {(name, class): [subjects]}
+    overall_best_by_n = {}
+    for key, subjects in student_subjects.items():
+        n = len(subjects)
+        overall_best_by_n.setdefault(n, {})[key] = subjects
 
     return overall_best_by_n
 
