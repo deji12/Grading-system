@@ -56,6 +56,8 @@ SUBJECT DATABASE (id, name, potential_abbreviation):
 23, National Values, Nat-Val
 24, Igbo, igbo
 25, Pre-vocational study, pvs
+26, Commerce , comm
+27, Business Study, Biz study, business studies
 
 IMPORTANT EXAMPLES:
 - Input "Igbo" → subject_id 24, name "Igbo"

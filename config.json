@@ -127,6 +127,16 @@
             "id": 25,
             "name": "Pre-vocational study",
             "potential_abbreviation": "pvs"
+        },
+        {
+            "id": 26,
+            "name": "Commerce",
+            "potential_abbreviation": "comm"
+        },
+        {
+            "id": 27,
+            "name": "Business Study",
+            "potential_abbreviation": "Biz study, business studies"
         }
     ]
 }
