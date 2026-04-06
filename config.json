@@ -40,103 +40,103 @@
         },
         {
             "id": 8,
-            "name": "Creative Arts",
-            "potential_abbreviation": "CCA"
-        },
-        {
-            "id": 9,
             "name": "Civic Education",
             "potential_abbreviation": "Civic Edu"
         },
         {
-            "id": 10,
+            "id": 9,
             "name": "Financial Accounting",
             "potential_abbreviation": "Fin Acc"
         },
         {
-            "id": 11,
+            "id": 10,
             "name": "Government",
             "potential_abbreviation": "Govt"
         },
         {
-            "id": 12,
+            "id": 11,
             "name": "Agriculture",
             "potential_abbreviation": "Agric"
         },
         {
-            "id": 13,
+            "id": 12,
             "name": "Chemistry",
             "potential_abbreviation": "Chem"
         },
         {
-            "id": 14,
+            "id": 13,
             "name": "Biology",
             "potential_abbreviation": "Bio"
         },
         {
-            "id": 15,
+            "id": 14,
             "name": "Physics",
             "potential_abbreviation": "Phy"
         },
         {
-            "id": 16,
+            "id": 15,
             "name": "Geography",
             "potential_abbreviation": "Geo"
         },
         {
-            "id": 17,
+            "id": 16,
             "name": "Economics",
             "potential_abbreviation": "Econs"
         },
         {
-            "id": 18,
+            "id": 17,
             "name": "Marketing",
             "potential_abbreviation": "Mktng"
         },
         {
-            "id": 19,
+            "id": 18,
             "name": "Data Processing",
             "potential_abbreviation": "Data Proc"
         },
         {
-            "id": 20,
+            "id": 19,
             "name": "Moral Instruction",
             "potential_abbreviation": "Moral Instruct"
         },
         {
-            "id": 21,
+            "id": 20,
             "name": "Literature In English",
             "potential_abbreviation": "Lit In Eng"
         },
         {
-            "id": 22,
+            "id": 21,
             "name": "Pre-Vocational Studies",
             "potential_abbreviation": "Pre-Voc"
         },
         {
-            "id": 23,
+            "id": 22,
             "name": "National Values",
             "potential_abbreviation": "Nat-Val"
         },
-            {
-            "id": 24,
+        {
+            "id": 23,
             "name": "Igbo",
             "potential_abbreviation": "igbo"
         },
         {
-            "id": 25,
+            "id": 24,
             "name": "Pre-vocational study",
             "potential_abbreviation": "pvs"
         },
         {
-            "id": 26,
+            "id": 25,
             "name": "Commerce",
             "potential_abbreviation": "comm"
         },
         {
-            "id": 27,
+            "id": 26,
             "name": "Business Study",
-            "potential_abbreviation": "Biz study, business studies"
+            "potential_abbreviation": "Biz study or business studies"
+        },
+        {
+            "id": 27,
+            "name": "French",
+            "potential_abbreviation": "french"
         }
     ]
 }

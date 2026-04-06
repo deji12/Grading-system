@@ -38,26 +38,26 @@ SUBJECT DATABASE (id, name, potential_abbreviation):
 5, Basic Science, Basic Sci
 6, Basic Technology, Basic Tech
 7, Catering And Craft Practices, CCP
-8, Creative Arts, CCA
-9, Civic Education, Civic Edu
-10, Financial Accounting, Fin Acc
-11, Government, Govt
-12, Agriculture, Agric
-13, Chemistry, Chem
-14, Biology, Bio
-15, Physics, Phy
-16, Geography, Geo
-17, Economics, Econs
-18, Marketing, Mktng
-19, Data Processing, Data Proc
-20, Moral Instruction, Moral Instruct
-21, Literature In English, Lit In Eng
-22, Pre-Vocational Studies, Pre-Voc
-23, National Values, Nat-Val
-24, Igbo, igbo
-25, Pre-vocational study, pvs
-26, Commerce , comm
-27, Business Study, Biz study, business studies
+8, Civic Education, Civic Edu
+9, Financial Accounting, Fin Acc
+10, Government, Govt
+11, Agriculture, Agric
+12, Chemistry, Chem
+13, Biology, Bio
+14, Physics, Phy
+15, Geography, Geo
+16, Economics, Econs
+17, Marketing, Mktng
+18, Data Processing, Data Proc
+19, Moral Instruction, Moral Instruct
+20, Literature In English, Lit In Eng
+21, Pre-Vocational Studies, Pre-Voc
+22, National Values, Nat-Val
+23, Igbo, igbo
+24, Pre-vocational study, pvs
+25, Commerce, comm
+26, Business Study, Biz study or business studies
+27. French, french
 
 IMPORTANT EXAMPLES:
 - Input "Igbo" → subject_id 24, name "Igbo"
