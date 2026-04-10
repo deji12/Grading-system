@@ -58,6 +58,7 @@ SUBJECT DATABASE (id, name, potential_abbreviation):
 25, Commerce, comm
 26, Business Study, Biz study or business studies
 27. French, french
+28. Cultural and Create Arts, CCA
 
 IMPORTANT EXAMPLES:
 - Input "Igbo" → subject_id 24, name "Igbo"

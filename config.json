@@ -137,6 +137,11 @@
             "id": 27,
             "name": "French",
             "potential_abbreviation": "french"
+        },
+        {
+            "id": 28,
+            "name": "Cultural and Create Arts",
+            "potential_abbreviation": "CCA"
         }
     ]
 }
