@@ -2,7 +2,6 @@ import os
 import json
 import time
 import csv
-from dummy_data import data
 from pathlib import Path
 import shutil
 import sys
