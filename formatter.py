@@ -102,6 +102,26 @@ Each class report object follows this schema:
 }
 
 No extra fields.
+--------------------------------------------------
+CRITICAL DATA ISOLATION RULE
+--------------------------------------------------
+
+You MUST ONLY extract data that exists explicitly in the user input.
+
+DO NOT use, copy, infer, or reuse ANY data from:
+- examples in this prompt
+- external files
+- retrieved documents
+- prior knowledge
+
+If a section (e.g., MOST IMPROVED) is NOT present in the input,
+you MUST return an empty list:
+
+"most_improved_students": []
+
+Under no circumstances should you fabricate or reuse data.
+
+If you do not see it in the input, it does not exist.
 """
 
 def validate_extracted_data(data):
