@@ -706,8 +706,6 @@ def generate_summary_csvs(class_data_path, config):
     ss_rows = []
     js_overall_candidates = []   # list of dicts {class_group, name, average}
     ss_overall_candidates = []
-    js_handshake_rows = []
-    ss_handshake_rows = []
 
     def add_rows_from_csv(section_name, class_group, csv_path, rows_list):
         data = _read_csv_file(csv_path)
@@ -732,11 +730,9 @@ def generate_summary_csvs(class_data_path, config):
 
         if class_name.startswith("JS"):
             target_rows = js_rows
-            handshake_target = js_handshake_rows
             overall_target = js_overall_candidates
         elif class_name.startswith("SS"):
             target_rows = ss_rows
-            handshake_target = ss_handshake_rows
             overall_target = ss_overall_candidates
         else:
             continue
@@ -766,22 +762,7 @@ def generate_summary_csvs(class_data_path, config):
                 )
                 add_rows_from_csv(section_name, class_group, csv_path, target_rows)
 
-        # 2. Collect handshake rows (second and third positions)
-        second = class_data.get("top_students", {}).get("second", {})
-        third = class_data.get("top_students", {}).get("third", {})
-        for pos, student in [("second", second), ("third", third)]:
-            if student.get("name"):
-                handshake_target.append({
-                    "Section": "HAND SHAKE",
-                    "Class": class_group,
-                    "Name": student.get("name", ""),
-                    "Subject(s)": "",
-                    "Average": student.get("average", ""),
-                    "Position": pos,
-                    "Improvement": "",
-                })
-
-        # 3. Collect first‑position students for overall best
+        # Collect first‑position students for overall best
         first = class_data.get("top_students", {}).get("first", {})
         if first.get("name"):
             overall_target.append({
@@ -805,17 +786,12 @@ def generate_summary_csvs(class_data_path, config):
                 "Improvement": "",
             })
 
-    # Append handshake rows (they come after overall best in the template)
-    js_rows.extend(js_handshake_rows)
-    ss_rows.extend(ss_handshake_rows)
-
     # ------------------------------------------------------------------
     # Sort rows by the intended section order (based on the 'sections' list)
     section_order = {}
     for idx, (section_name, _, _, _) in enumerate(sections):
         section_order[section_name] = idx
     section_order["OVERALL BEST STUDENTS"] = len(sections)
-    section_order["HAND SHAKE"] = len(sections) + 1
 
     for rows in (js_rows, ss_rows):
         rows.sort(key=lambda row: section_order.get(row.get("Section", ""), 9999))
