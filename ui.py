@@ -9,7 +9,7 @@ from utils import (
     save_formatted_data, reset_grading_session,
     CLASSES_ROOT_DIR
 )
-from grade_calculations import execute_calculations
+from grade_calculations import execute_calculations, generate_final_summaries_and_reports
 
 # Set appearance and theme
 ctk.set_appearance_mode("light")
@@ -741,6 +741,9 @@ Please confirm that the information above is correct.
                     # Success case - response contains "data" key
                     result["data"] = response["data"]
                     save_formatted_data(response["data"], execute_calculations)
+
+                    print("Calling generate_final_summaries_and_reports()...")
+                    generate_final_summaries_and_reports()
                     
             except Exception as e:
                 # Handle any unexpected exceptions

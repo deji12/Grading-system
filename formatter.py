@@ -1,6 +1,7 @@
 from openai import OpenAI
 import json
 import openai
+import re
 
 SYSTEM_PROMPT = """
 You are a strict data extraction engine.
@@ -167,15 +168,90 @@ def validate_extracted_data(data):
 
     return True
 
+import re
+
 def is_valid_raw_input(user_input):
-    required_keywords = [
-        "Report",
-        "position",
-        "BEST IN SUBJECTS",
-        # "MOST IMPROVED"
+    """
+    Validates result data input, handling multiple format variations.
+    Returns True if the input appears to be valid result data.
+    """
+    text = user_input.lower()
+    
+    # Check for class/section headers (JSS1A, JSS1B, SS2A, etc.)
+    has_class = bool(re.search(r'(jss|ss)\s*\d+[a-z]?', text))
+    
+    # Check for term indicators (supports both formats)
+    term_patterns = [
+        r'\d+(?:st|nd|rd|th)?\s*term',  # "2ND TERM", "First Term"
+        r'\(?(?:first|second|third)\s+term\)?',  # "(First Term)"
+        r'report\s*\(?term\)?',  # "Report (First Term)"
+        r'\d+(?:nd|rd|th)?\s*term\s+result',  # "2ND TERM RESULT"
     ]
-    # If any keyword is missing, input is invalid
-    return all(keyword in user_input for keyword in required_keywords)
+    has_term = any(re.search(pattern, text) for pattern in term_patterns)
+    
+    # Check for position indicators (supports multiple formats)
+    position_patterns = [
+        r'\d+(?:st|nd|rd|th)\s+position',  # "1st position"
+        r'position\s*[-:]?\s*\d+',  # "position - 1"
+        r'\d+:\s*\d+(?:st|nd|rd):',  # "1: 1ST:"
+        r'^\s*\d+(?:st|nd|rd)\s*[:-]',  # "1ST-" or "1ST:" at line start
+        r'^\s*\d+(?:st|nd|rd)\s',  # "1st " at line start
+    ]
+    has_positions = any(re.search(pattern, text, re.MULTILINE) for pattern in position_patterns)
+    
+    # Check for "BEST IN" section (supports variations)
+    best_patterns = [
+        r'best in each subject',  # "BEST IN EACH SUBJECT"
+        r'best in subjects',  # "BEST IN SUBJECTS"
+        r'\*best in each subject\*',  # "*BEST IN EACH SUBJECT*"
+    ]
+    has_best_section = any(re.search(pattern, text) for pattern in best_patterns)
+    
+    # Check for subject-score patterns (more flexible)
+    subject_score_patterns = [
+        r'[a-z\s&]+:\s*[a-z\s]+(?:[,&]\s*[a-z\s]+)*\s*[-:]\s*\d+',  # "English: Name - 83"
+        r'\d+\.\s*[a-z\s]+-\s*[a-z\s]+-\s*\d+',  # "1.English Lang - Name - 83"
+        r'[a-z\s]+-\s*[a-z\s]+-\s*\d+',  # "English - Name - 83"
+        r'[a-z\s]+:\s*[a-z\s]+\s+\d+',  # "English: Name 83"
+    ]
+    has_subject_scores = any(re.search(pattern, text) for pattern in subject_score_patterns)
+    
+    # Check for averages/grades
+    avg_patterns = [
+        r'ave\.?\s*[\d\.]+',  # "Ave 88.3" or "Ave. 85.4"
+        r'average\s*[\d\.]+',  # "Average 80.2"
+    ]
+    has_averages = any(re.search(pattern, text) for pattern in avg_patterns)
+    
+    # Check if it has "Report" keyword
+    has_report = 'report' in text
+    
+    # Check for numbered list of students (e.g., "1: 1ST:" or "1st position")
+    has_student_list = has_positions or bool(re.search(r'\d+:\s*[A-Z]', text))
+    
+    # Count how many key elements are present (more flexible scoring)
+    score = 0
+    if has_class:
+        score += 2
+    if has_term:
+        score += 2
+    if has_best_section:
+        score += 2
+    if has_subject_scores:
+        score += 2
+    if has_student_list or has_averages:
+        score += 1
+    
+    # Valid if score >= 5 (adjustable threshold)
+    # Also require essential elements for either format
+    if has_report:
+        # Report format requires class, term, and best section
+        return has_class and has_term and has_best_section and score >= 5
+    else:
+        # Non-report format requires term result indicator
+        has_term_result = bool(re.search(r'\d+(?:nd|rd|th)?\s*term\s+result', text))
+        return has_class and has_term_result and score >= 4
+
 
 def format_user_input(user_input, api_key):
     # print(user_input)

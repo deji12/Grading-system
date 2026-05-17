@@ -68,6 +68,9 @@ def save_formatted_data(data, execute_calculations):
         - Single report: {"class": {...}, "top_students": {...}, ...}
         - Batch reports: {"reports": [ {...}, {...} ]}
     """
+    # Keep track of which class folders have been updated
+    classes_updated = set()
+    
     # Check if this is a batch response (multiple reports)
     if "reports" in data and isinstance(data["reports"], list):
         # Process each report in the batch
@@ -83,21 +86,14 @@ def save_formatted_data(data, execute_calculations):
             file_path = os.path.join(class_path, f'data/{class_tag}.json')
             with open(file_path, "w") as f:
                 json.dump(report, f, indent=4)
+            
+            classes_updated.add(class_name)
         
-        # After saving all batch reports, run calculations once on the parent class data folder
-        # We need to determine the common class name? Actually each report might have different class name (JS1, JS2, etc.)
-        # But execute_calculations expects a path to a folder containing JSON files for a specific class (e.g., classes/JS1/data)
-        # However with batch, we might have multiple classes (e.g., JS1, JS2, SS1) in one call.
-        # We should call execute_calculations for each distinct class name.
-        # Better: collect all class names that appear, then call execute_calculations on each class's data folder.
-        classes_processed = set()
-        for report in data["reports"]:
-            class_name = report['class']['name']
-            if class_name not in classes_processed:
-                classes_processed.add(class_name)
-                class_data_path = os.path.join(CLASSES_ROOT_DIR, class_name, 'data')
-                if os.path.exists(class_data_path):
-                    execute_calculations(class_data_path)
+        # After saving all batch reports, run calculations for each updated class
+        for class_name in classes_updated:
+            class_data_path = os.path.join(CLASSES_ROOT_DIR, class_name, 'data')
+            if os.path.exists(class_data_path):
+                execute_calculations(class_data_path)
     else:
         # Single report (old format)
         class_name = data['class']['name']

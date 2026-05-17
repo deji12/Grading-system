@@ -89,6 +89,7 @@ def _write_section_table(doc, section_name, rows):
 
     doc.add_paragraph()
 
+
 def generate_word_report(csv_path, output_path, title):
     """Generate a Word report from a summary CSV file."""
     rows = []
@@ -129,6 +130,7 @@ def generate_word_report(csv_path, output_path, title):
                 raise PermissionError(error_msg)
     return False
 
+
 def generate_all_word_reports():
     """Generate Word reports for JS1-3 and SS1-3 from the summary CSVs."""
     js_csv = os.path.join(CLASSES_ROOT_DIR, "JS1-3.csv")
@@ -143,6 +145,7 @@ def generate_all_word_reports():
         generate_word_report(ss_csv, os.path.join(CLASSES_ROOT_DIR, "SS1-3_Report.docx"), "SENIOR SECONDARY SCHOOL (SS1-3)")
     else:
         print("SS1-3.csv not found, cannot generate SS Word report.")
+
 
 def _get_overall_best_by_n(class_data_path, config):
     subject_lookup = _get_subject_lookup(config)
@@ -217,15 +220,7 @@ def _generate_position_report_for_class(
         config = load_config()
     if positions is None:
         positions = []
-    """Generic engine for generating a per-class position/average based report.
-
-    - positions: list of position keys (e.g. ['second', 'third']).
-    - avg_min/avg_max: inclusive lower bound and exclusive upper bound for average.
-    - best_scope: None|'local'|'overall'.
-    - best_n: if best_scope is set, this is the exact number of subjects.
-    - overall_best_by_n: precomputed map from n -> {(name, class): [subjects]}.
-    - filename: output filename (required).
-    """
+    """Generic engine for generating a per-class position/average based report."""
 
     if filename is None:
         return
@@ -339,6 +334,7 @@ def calculate_students_best_in_n_subjects(data, config, n):
         ["name", "subject_name"],
     )
 
+
 def extract_and_save_most_improved_students(data):
     class_name = data.get("class")["name"]
     class_group = data.get("class")["group"]
@@ -364,6 +360,7 @@ def extract_and_save_most_improved_students(data):
         ),
         field_names=["name", "improvement"]
     )
+
 
 # BEST IN N SUBJECTS, 1ST AMONG THE BEST (overall best across class level)
 def calculate_overall_best_in_n_subjects(class_data_path, config, n):
@@ -392,6 +389,7 @@ def calculate_overall_best_in_n_subjects(class_data_path, config, n):
         ["name", "subject_name", "class"],
     )
 
+
 # 2ND OR 3RD POSITION BELOW AVERAGE 80 ONLY
 def calculate_2nd_and_3rd_position_below_average_80(data):
     _generate_position_report_for_class(
@@ -401,6 +399,7 @@ def calculate_2nd_and_3rd_position_below_average_80(data):
         avg_max=80,
         filename="2nd_or_3rd_position_below_average_80.csv",
     )
+
 
 # 2ND OR 3RD POSITION BELOW AVERAGE 80, BEST IN ONE-FOUR SUBJECT
 def calculate_2nd_and_3rd_position_below_average_80_best_in_n_subjects(data, config, n):
@@ -414,6 +413,7 @@ def calculate_2nd_and_3rd_position_below_average_80_best_in_n_subjects(data, con
         best_n=n,
         filename=f"2nd_or_3rd_position_below_average_80_best_in_{n}_subjects.csv",
     )
+
 
 # 2ND OR 3RD POSITION BELOW AVERAGE 80, 1ST AMONG THE BEST, BEST IN ONE - SIX SUBJECTS
 def calculate_2nd_3rd_below_80_and_overall_best_in_n_subjects(
@@ -441,6 +441,7 @@ def calculate_2nd_3rd_below_80_and_overall_best_in_n_subjects(
             filename=f"2nd_or_3rd_position_below_average_80_overall_best_in_{n}_subjects.csv",
         )
 
+
 # 2ND OR 3RD POSITION ABOVE AVERAGE 80 ONLY
 def calculate_2nd_and_3rd_position_above_average_80(data):
     _generate_position_report_for_class(
@@ -449,6 +450,7 @@ def calculate_2nd_and_3rd_position_above_average_80(data):
         avg_min=80,
         filename="2nd_or_3rd_position_above_average_80.csv",
     )
+
 
 # 2ND OR 3RD POSITION ABOVE AVERAGE 80, BEST IN ONE-SIX SUBJECT
 def calculate_2nd_and_3rd_position_above_average_80_best_in_n_subjects(data, config, n):
@@ -461,6 +463,7 @@ def calculate_2nd_and_3rd_position_above_average_80_best_in_n_subjects(data, con
         best_n=n,
         filename=f"2nd_or_3rd_position_above_average_80_best_in_{n}_subjects.csv",
     )
+
 
 # 2ND OR 3RD POSITION ABOVE AVERAGE 80, 1ST AMONG THE BEST, BEST IN ONE-FIVE SUBJECTS
 def calculate_2nd_3rd_above_80_and_overall_best_in_n_subjects(
@@ -487,6 +490,7 @@ def calculate_2nd_3rd_above_80_and_overall_best_in_n_subjects(
             filename=f"2nd_or_3rd_position_above_average_80_overall_best_in_{n}_subjects.csv",
         )
 
+
 # 1ST POSITION BELOW AVERAGE 80 ONLY
 def calculate_1st_position_below_average_80(data):
     _generate_position_report_for_class(
@@ -496,6 +500,7 @@ def calculate_1st_position_below_average_80(data):
         avg_max=80,
         filename="1st_position_below_average_80.csv",
     )
+
 
 # 1ST POSITION BELOW AVERAGE 80, BEST IN ONE-FIVE SUBJECT
 def calculate_1st_position_below_average_80_best_in_n_subjects(data, config, n):
@@ -509,6 +514,7 @@ def calculate_1st_position_below_average_80_best_in_n_subjects(data, config, n):
         best_n=n,
         filename=f"1st_position_below_average_80_best_in_{n}_subjects.csv",
     )
+
 
 # 1ST POSITION BELOW AVERAGE 80, 1ST AMONG THE BEST, BEST IN ONE SUBJECT
 def calculate_1st_below_80_and_overall_best_in_n_subjects(
@@ -536,6 +542,7 @@ def calculate_1st_below_80_and_overall_best_in_n_subjects(
             filename=f"1st_below_average_80_overall_best_in_{n}_subjects.csv",
         )
 
+
 # 1ST POSITION ABOVE AVERAGE 80 ONLY
 def calculate_1st_position_above_average_80(data):
     _generate_position_report_for_class(
@@ -544,6 +551,7 @@ def calculate_1st_position_above_average_80(data):
         avg_min=80,
         filename="1st_position_above_average_80.csv",
     )
+
 
 # 1ST POSITION ABOVE AVERAGE 80, BEST IN ONE SUBJECT
 def calculate_1st_position_above_average_80_best_in_n_subjects(data, config, n):
@@ -556,6 +564,7 @@ def calculate_1st_position_above_average_80_best_in_n_subjects(data, config, n):
         best_n=n,
         filename=f"1st_position_above_average_80_best_in_{n}_subjects.csv",
     )
+
 
 # 1ST POSITION ABOVE AVERAGE 80, 1ST AMONG THE BEST, BEST IN ONE SUBJECT
 def calculate_1st_above_80_and_overall_best_in_n_subjects(
@@ -582,6 +591,7 @@ def calculate_1st_above_80_and_overall_best_in_n_subjects(
             filename=f"1st_above_average_80_overall_best_in_{n}_subjects.csv",
         )
 
+
 def _read_csv_file(file_path):
     """Read a CSV and return list of dicts, or empty list if file missing."""
     if not os.path.exists(file_path):
@@ -590,9 +600,18 @@ def _read_csv_file(file_path):
         reader = csv.DictReader(f)
         return list(reader)
 
+
 def generate_summary_csvs(class_data_path, config):
     """Generate JS1-3.csv and SS1-3.csv in the classes root directory."""
-    # Build sections in the exact order of the template (only n‑ranges that are actually calculated)
+    print(f"\n=== generate_summary_csvs called with class_data_path: {class_data_path} ===")
+    
+    # Check if there are any JSON files
+    json_files = list(Path(class_data_path).glob("*.json"))
+    print(f"Found {len(json_files)} JSON files in {class_data_path}")
+    for f in json_files:
+        print(f"  - {f.name}")
+
+    # Build sections in the exact order of the template
     sections = []
 
     # 1. BEST IN N SUBJECTS ONLY (n=1..4)
@@ -700,11 +719,10 @@ def generate_summary_csvs(class_data_path, config):
             None
         ))
 
-    # ------------------------------------------------------------------
     # Prepare containers for JS and SS
     js_rows = []
     ss_rows = []
-    js_overall_candidates = []   # list of dicts {class_group, name, average}
+    js_overall_candidates = []
     ss_overall_candidates = []
 
     def add_rows_from_csv(section_name, class_group, csv_path, rows_list):
@@ -737,7 +755,7 @@ def generate_summary_csvs(class_data_path, config):
         else:
             continue
 
-        # 1. Add rows from all CSV sections
+        # Add rows from all CSV sections
         for section_name, file_pattern, is_overall, _ in sections:
             if is_overall:
                 overall_file = os.path.join(CLASSES_ROOT_DIR, class_name, "results", file_pattern)
@@ -771,7 +789,6 @@ def generate_summary_csvs(class_data_path, config):
                 "average": first.get("average", 0),
             })
 
-    # ------------------------------------------------------------------
     # Add OVERALL BEST STUDENTS (only the single top student per class level)
     for target_rows, candidates in [(js_rows, js_overall_candidates), (ss_rows, ss_overall_candidates)]:
         if candidates:
@@ -786,8 +803,7 @@ def generate_summary_csvs(class_data_path, config):
                 "Improvement": "",
             })
 
-    # ------------------------------------------------------------------
-    # Sort rows by the intended section order (based on the 'sections' list)
+    # Sort rows by the intended section order
     section_order = {}
     for idx, (section_name, _, _, _) in enumerate(sections):
         section_order[section_name] = idx
@@ -796,7 +812,6 @@ def generate_summary_csvs(class_data_path, config):
     for rows in (js_rows, ss_rows):
         rows.sort(key=lambda row: section_order.get(row.get("Section", ""), 9999))
 
-    # ------------------------------------------------------------------
     # Write the two summary CSVs
     fieldnames = ["Section", "Class", "Name", "Subject(s)", "Average", "Position", "Improvement"]
     js_path = os.path.join(CLASSES_ROOT_DIR, "JS1-3.csv")
@@ -810,11 +825,16 @@ def generate_summary_csvs(class_data_path, config):
 
     print(f"Summary CSVs generated: {js_path}, {ss_path}")
 
+    print(f"js_rows count: {len(js_rows)}")
+    print(f"ss_rows count: {len(ss_rows)}")
+
+
 def execute_calculations(class_data_path):
+    """Execute calculations for a specific class folder (e.g., JSS1, JSS2, etc.)"""
     config = load_config()
     overall_best_by_n = _get_overall_best_by_n(class_data_path, config)
+    
     for class_group in Path(class_data_path).iterdir():
-        
         with open(class_group, 'r') as file:
             data = json.load(file)
 
@@ -880,5 +900,276 @@ def execute_calculations(class_data_path):
             overall_best_by_n=overall_best_by_n,
         )
 
-    generate_summary_csvs(class_data_path, config)
-    generate_all_word_reports() 
+
+def generate_final_summaries_and_reports():
+    """Generate summary CSVs and Word reports for all classes at once.
+    Call this function once after all class data has been processed."""
+    config = load_config()
+    
+    # List of class levels to process
+    class_levels = ['JSS1', 'JSS2', 'JSS3', 'SS1', 'SS2', 'SS3']
+    
+    # Accumulate all rows across class levels
+    all_js_rows = []
+    all_ss_rows = []
+    
+    # For each class level, collect rows without writing to CSV yet
+    for class_name in class_levels:
+        class_data_path = os.path.join(CLASSES_ROOT_DIR, class_name, 'data')
+        
+        if os.path.exists(class_data_path) and list(Path(class_data_path).glob("*.json")):
+            print(f"Collecting data from {class_name}...")
+            
+            # Collect rows from this class level
+            js_rows, ss_rows = _collect_summary_rows(class_data_path, config)
+            
+            # Accumulate
+            all_js_rows.extend(js_rows)
+            all_ss_rows.extend(ss_rows)
+    
+    # Now write the final summary CSVs once with all accumulated data
+    fieldnames = ["Section", "Class", "Name", "Subject(s)", "Average", "Position", "Improvement"]
+    js_path = os.path.join(CLASSES_ROOT_DIR, "JS1-3.csv")
+    ss_path = os.path.join(CLASSES_ROOT_DIR, "SS1-3.csv")
+    
+    # Sort rows by section order
+    all_js_rows = _sort_rows_by_section(all_js_rows, config)
+    all_ss_rows = _sort_rows_by_section(all_ss_rows, config)
+    
+    # Write JS1-3.csv
+    if all_js_rows:
+        with open(js_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(all_js_rows)
+        print(f"JS1-3.csv generated with {len(all_js_rows)} rows")
+    else:
+        print("No JS data found")
+    
+    # Write SS1-3.csv
+    if all_ss_rows:
+        with open(ss_path, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            writer.writerows(all_ss_rows)
+        print(f"SS1-3.csv generated with {len(all_ss_rows)} rows")
+    else:
+        print("No SS data found")
+    
+    # Generate final Word reports
+    generate_all_word_reports()
+
+
+def _collect_summary_rows(class_data_path, config):
+    """Collect rows from a single class level (e.g., JSS1) without writing to CSV."""
+    # Build sections in the exact order of the template
+    sections = _build_sections()
+    
+    js_rows = []
+    ss_rows = []
+    js_overall_candidates = []
+    ss_overall_candidates = []
+
+    def add_rows_from_csv(section_name, class_group, csv_path, rows_list):
+        data = _read_csv_file(csv_path)
+        for row in data:
+            out_row = {
+                "Section": section_name,
+                "Class": class_group,
+                "Name": row.get("name", ""),
+                "Subject(s)": row.get("subject_name", ""),
+                "Average": row.get("average", ""),
+                "Position": row.get("position", ""),
+                "Improvement": row.get("improvement", ""),
+            }
+            rows_list.append(out_row)
+
+    # Iterate over each class group JSON file
+    for class_group_file in Path(class_data_path).glob("*.json"):
+        with open(class_group_file, "r") as f:
+            class_data = json.load(f)
+        class_name = class_data["class"]["name"]
+        class_group = f"{class_name}{class_data['class']['group']}"
+
+        if class_name.startswith("JS"):
+            target_rows = js_rows
+            overall_target = js_overall_candidates
+        elif class_name.startswith("SS"):
+            target_rows = ss_rows
+            overall_target = ss_overall_candidates
+        else:
+            continue
+
+        # Add rows from all CSV sections
+        for section_name, file_pattern, is_overall, _ in sections:
+            if is_overall:
+                overall_file = os.path.join(CLASSES_ROOT_DIR, class_name, "results", file_pattern)
+                overall_data = _read_csv_file(overall_file)
+                for row in overall_data:
+                    if row.get("class") == class_group:
+                        out_row = {
+                            "Section": section_name,
+                            "Class": class_group,
+                            "Name": row.get("name", ""),
+                            "Subject(s)": row.get("subject_name", ""),
+                            "Average": "",
+                            "Position": "",
+                            "Improvement": "",
+                        }
+                        target_rows.append(out_row)
+            else:
+                csv_path = os.path.join(
+                    CLASSES_ROOT_DIR, class_name, "results",
+                    f"{class_name}_{class_data['class']['group']}",
+                    file_pattern
+                )
+                add_rows_from_csv(section_name, class_group, csv_path, target_rows)
+
+        # Collect first‑position students for overall best
+        first = class_data.get("top_students", {}).get("first", {})
+        if first.get("name"):
+            overall_target.append({
+                "class_group": class_group,
+                "name": first.get("name", ""),
+                "average": first.get("average", 0),
+            })
+
+    # Add OVERALL BEST STUDENTS (only the single top student per class level)
+    for target_rows, candidates in [(js_rows, js_overall_candidates), (ss_rows, ss_overall_candidates)]:
+        if candidates:
+            best_student = max(candidates, key=lambda x: x.get("average", 0))
+            target_rows.append({
+                "Section": "OVERALL BEST STUDENTS",
+                "Class": best_student["class_group"],
+                "Name": best_student["name"],
+                "Subject(s)": "",
+                "Average": best_student["average"],
+                "Position": "",
+                "Improvement": "",
+            })
+
+    return js_rows, ss_rows
+
+
+def _build_sections():
+    """Build the sections list in the exact order of the template."""
+    sections = []
+
+    # 1. BEST IN N SUBJECTS ONLY (n=1..4)
+    for n in range(1, 5):
+        sections.append((
+            f"BEST IN {n} SUBJECT{'S' if n>1 else ''} ONLY",
+            f"best_in_{n}_subjects.csv",
+            False,
+            None
+        ))
+
+    # 2. THE MOST IMPROVED STUDENT
+    sections.append(("THE MOST IMPROVED STUDENT", "most_improved_students.csv", False, None))
+
+    # 3. 2ND/3RD POSITION BELOW AVERAGE 80 ONLY
+    sections.append(("2ND OR 3RD POSITION BELOW AVERAGE 80 ONLY", "2nd_or_3rd_position_below_average_80.csv", False, None))
+
+    # 4. 2ND/3RD BELOW 80, BEST IN N SUBJECTS (n=1..4)
+    for n in range(1, 5):
+        sections.append((
+            f"2ND OR 3RD POSITION BELOW AVERAGE 80, BEST IN {n} SUBJECT{'S' if n>1 else ''}",
+            f"2nd_or_3rd_position_below_average_80_best_in_{n}_subjects.csv",
+            False,
+            None
+        ))
+
+    # 5. BEST IN N SUBJECTS, 1ST AMONG THE BEST (n=1..6)
+    for n in range(1, 7):
+        sections.append((
+            f"BEST IN {n} SUBJECT{'S' if n>1 else ''}, 1ST AMONG THE BEST",
+            f"best_overall_in_{n}_subjects.csv",
+            True,
+            None
+        ))
+
+    # 6. 2ND/3RD BELOW 80, 1ST AMONG THE BEST, BEST IN N SUBJECTS (n=1..6)
+    for n in range(1, 7):
+        sections.append((
+            f"2ND OR 3RD POSITION BELOW AVERAGE 80, 1ST AMONG THE BEST, BEST IN {n} SUBJECT{'S' if n>1 else ''}",
+            f"2nd_or_3rd_position_below_average_80_overall_best_in_{n}_subjects.csv",
+            True,
+            None
+        ))
+
+    # 7. 2ND/3RD POSITION ABOVE AVERAGE 80 ONLY
+    sections.append(("2ND OR 3RD POSITION ABOVE AVERAGE 80 ONLY", "2nd_or_3rd_position_above_average_80.csv", False, None))
+
+    # 8. 2ND/3RD ABOVE 80, BEST IN N SUBJECTS (n=1..6)
+    for n in range(1, 7):
+        sections.append((
+            f"2ND OR 3RD POSITION ABOVE AVERAGE 80, BEST IN {n} SUBJECT{'S' if n>1 else ''}",
+            f"2nd_or_3rd_position_above_average_80_best_in_{n}_subjects.csv",
+            False,
+            None
+        ))
+
+    # 9. 2ND/3RD ABOVE 80, 1ST AMONG THE BEST, BEST IN N SUBJECTS (n=1..5)
+    for n in range(1, 6):
+        sections.append((
+            f"2ND OR 3RD POSITION ABOVE AVERAGE 80, 1ST AMONG THE BEST, BEST IN {n} SUBJECT{'S' if n>1 else ''}",
+            f"2nd_or_3rd_position_above_average_80_overall_best_in_{n}_subjects.csv",
+            True,
+            None
+        ))
+
+    # 10. 1ST POSITION BELOW AVERAGE 80 ONLY
+    sections.append(("1ST POSITION BELOW AVERAGE 80 ONLY", "1st_position_below_average_80.csv", False, None))
+
+    # 11. 1ST BELOW 80, BEST IN N SUBJECTS (n=1..5)
+    for n in range(1, 6):
+        sections.append((
+            f"1ST POSITION BELOW AVERAGE 80, BEST IN {n} SUBJECT{'S' if n>1 else ''}",
+            f"1st_position_below_average_80_best_in_{n}_subjects.csv",
+            False,
+            None
+        ))
+
+    # 12. 1ST BELOW 80, 1ST AMONG THE BEST, BEST IN N SUBJECTS (n=1..7)
+    for n in range(1, 8):
+        sections.append((
+            f"1ST POSITION BELOW AVERAGE 80, 1ST AMONG THE BEST, BEST IN {n} SUBJECT{'S' if n>1 else ''}",
+            f"1st_below_average_80_overall_best_in_{n}_subjects.csv",
+            True,
+            None
+        ))
+
+    # 13. 1ST POSITION ABOVE AVERAGE 80 ONLY
+    sections.append(("1ST POSITION ABOVE AVERAGE 80 ONLY", "1st_position_above_average_80.csv", False, None))
+
+    # 14. 1ST ABOVE 80, BEST IN N SUBJECTS (n=1..5)
+    for n in range(1, 6):
+        sections.append((
+            f"1ST POSITION ABOVE AVERAGE 80, BEST IN {n} SUBJECT{'S' if n>1 else ''}",
+            f"1st_position_above_average_80_best_in_{n}_subjects.csv",
+            False,
+            None
+        ))
+
+    # 15. 1ST ABOVE 80, 1ST AMONG THE BEST, BEST IN N SUBJECTS (n=1..8)
+    for n in range(1, 9):
+        sections.append((
+            f"1ST POSITION ABOVE AVERAGE 80, 1ST AMONG THE BEST, BEST IN {n} SUBJECT{'S' if n>1 else ''}",
+            f"1st_above_average_80_overall_best_in_{n}_subjects.csv",
+            True,
+            None
+        ))
+
+    return sections
+
+
+def _sort_rows_by_section(rows, config):
+    """Sort rows by the intended section order."""
+    sections = _build_sections()
+    section_order = {}
+    for idx, (section_name, _, _, _) in enumerate(sections):
+        section_order[section_name] = idx
+    section_order["OVERALL BEST STUDENTS"] = len(sections)
+    
+    rows.sort(key=lambda row: section_order.get(row.get("Section", ""), 9999))
+    return rows
